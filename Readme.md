@@ -4,13 +4,12 @@
 - Only thing we have to change is the config file for that data, our model takes care of the rest.
 
 ### Dependencies
-
-[x] Statsmodel
-[x] Pandas
-[x] Numpy 
-[x] Flask
-[x] json
-[x] Sklearn
+- [x] Statsmodel
+- [x] Pandas
+- [x] Numpy 
+- [x] Flask
+- [x] json
+- [x] Sklearn
 
 ### What inputs it demands?
 - hierarchy (the Brand/Manufacturer/Subbrand or anything given in config)
