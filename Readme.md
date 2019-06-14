@@ -4,6 +4,7 @@
 - Only thing we have to change is the config file for that data, our model takes care of the rest.
 
 ### Dependencies
+
 [x] Statsmodel
 [x] Pandas
 [x] Numpy 
