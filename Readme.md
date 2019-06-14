@@ -27,5 +27,5 @@
 ### The Output contains:-
 - Predicted sales or target variable
 - Percentage of the change as compared to the last dated value.
-- # A recommendation based on the coefficients(derived from the fixed and random effects) for all the parameteres provided.
+- ###### A recommendation based on the coefficients(derived from the fixed and random effects) for all the parameteres provided.
 - Recommended Sales or value of target variable.
