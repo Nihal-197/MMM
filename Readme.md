@@ -1,7 +1,7 @@
 # Market Mix Model 
 
 #### Marketing mix modeling (MMM) is statistical analysis such as multivariate regressions on sales and marketing time series data to estimate the impact of various marketing tactics (marketing mix) on sales and then forecast the impact of future sets of tactics.
-
+- End to end API
 - Everything created and implemented from the very basics in Python 
 - Code is implemented in such a way so that it can be directly applied to any data as a black box.
 - Only thing we have to change is the config file for that data, our model takes care of the rest.
@@ -15,7 +15,7 @@
 - [x] Sklearn
 
 ### What inputs it demands?
-- hierarchy (the Brand/Manufacturer/Subbrand or anything given in config)
+- Hierarchy (the Brand/Manufacturer/Subbrand or anything given in config)
 - Name of the hierarchy
 - Geographical level (Ex. All India or some zone region)
 - Sub Geographical data( if opted for more specs according to config file)
