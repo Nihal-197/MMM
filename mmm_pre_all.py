@@ -74,6 +74,24 @@ def corr_find(data_promo1,channel_list,hier,spc_hier,cor_coef_ad,cor_coef_else):
                     raise ValueError("Correlation found! Model discarded")
     return cor1_dict
 
+#creating a function for merging the colms in the correlated values 
+#new map dict 
+#CHANGE lr to lr_list and same for decay
+def corr_merge(data_promo1,mapped,cor1_dict,hier,spc_hier,cor_coef_ad,cor_coef_else,lr,decay):
+    if cor1_dict:
+        item_1= mapped[list(cor1_dict.keys())[0]]
+        item_2 = mapped[list(cor1_dict.values())[0]]
+        data_promo1[f'{item_1}']=data_promo1[item_1]+data_promo1[item_2]
+        data_promo1.drop(columns=[list(cor1_dict.keys())[0],list(cor1_dict.values())[0],f'ad_stock_s_{item_2}_log',f'ad_stock_s_{item_1}_log'],inplace=True)
+        ad_stock_s_curve_u(data_promo1,item_1,lr,decay)
+        log_var_crores(data_promo1,f'ad_stock_nad_{item_1}')
+        log_var_crores(data_promo1,f'ad_stock_s_{item_1}')
+        cor1_dict.pop(list(cor1_dict.keys())[0])
+        cor1_dict = corr_find(data_promo1,channel_list,hier,spc_hier,cor_coef_ad,cor_coef_else)
+        return corr_merge(data_promo1,mapped,cor1_dict,hier,spc_hier,cor_coef_ad,cor_coef_else,lr,decay)
+    else :
+        return data_promo1
+
 #Now some values can contain 0 values for log function hence finding index of them and replacing them with the second
 #min value
 def rep_zero(data,var):
