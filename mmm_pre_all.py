@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
-
-
+from corr_finder import *
 #for brand drop subbrand, for manuf. drop band and subbrand 
 
 
-#==========================pre2PROCESSING======================
+#==========================PRE_PROCESSING======================
 
-def ad_stock_s_curve_u(data,var,lr_list,decay_list):
+#ALL INDIA LEVEL ADSTOCK
+def ad_stock_s_curve_u(data,var,hier,spc_hier,lr_list,decay_list):
     ad_stock_list=[]
     ad_stock_list2=[]
     
@@ -16,15 +16,18 @@ def ad_stock_s_curve_u(data,var,lr_list,decay_list):
     
     ad_stock_value=0
     ad_stock_value2=0
-    for index,row in data.iterrows():
+    
+    for index,row in data[data[hier]==spc_hier].iterrows():
         t=row[str(var)]
+        #print(row['month'],row['Brand'],var)
         ad_stock_value=(1/(1+np.exp(-lr_rate*t)))+ad_stock_value*decay
         ad_stock_value2=1- np.exp(-lr_rate*t)+ad_stock_value2*decay
         ad_stock_list.append(ad_stock_value)
         ad_stock_list2.append(ad_stock_value2)
-    data['ad_stock_s_'+str(var)]=ad_stock_list
-    data['ad_stock_nad_'+str(var)]=ad_stock_list2
-        #data['ad_stock_l_'+str(var)]=tsa.filters.filtertools.recursive_filter(data[var],ar_coeff)
+        data.loc[index,'ad_stock_s_'+str(var)] =ad_stock_value
+        data.loc[index,'ad_stock_nad_'+str(var)] =ad_stock_value2
+
+
 def col_drop(hier,hier_list):
     col_2_drop=[]
     j=0
@@ -34,64 +37,6 @@ def col_drop(hier,hier_list):
             col_2_drop=hier_list[j:]
         
     return col_2_drop 
-
-#function to make the dict with the channel_values 
-def str_fin_ad(string):
-    if bool(re.search('ad_stock_nad_(\w+)_log',string)):
-        return re.findall('ad_stock_nad_(\w+)_log',string)[0]
-    elif bool(re.search('(\w+)_log',string)):
-        return re.findall('(\w+)_log',string)[0]
-#create a for loop to get the dictionary for the variables and then transfom them into adstock and log 
-def new_map_dict(corr):
-    map_dict = {}
-    for i in range(len(corr.columns)-1):
-        string = list(corr.columns)[i]
-        map_dict[str_fin_ad(string)]=string
-        
-    return {y:x for x,y in map_dict.items()}
-#CREATE A FUCNTION BY TAKING THE VALUES OF THE DICT RETURN BY THE CORRELATION AND ADD THOSE PURE VALUES, LATER TRNASFORM THEM AND REPEAT  UNTIL WE FIND NO CORRELATION
-
-def corr_find(data_promo1,channel_list,hier,spc_hier,cor_coef_ad,cor_coef_else):
-    non_promo_col=np.array(['Price','PCV'])
-    chann=np.array(channel_list)
-    driver = [str("ad_stock_nad_")+i for i in chann.astype('object')+ "_log"]+[j for j in non_promo_col.astype('object') + "_log"]
-    lis1=driver+['Sales_log']
-    corr1= data_promo1[data_promo1[hier]==spc_hier][lis1].corr()
-    corr_find.corr = corr1.copy()
-    cor1_dict={}
-    #creating a dictionary mapping elements with correlation
-    for i in range(len(corr1)-1):
-        if i<len(chann):
-            for j in range(len(corr1)-1):        
-                if ((corr1[lis1[i]].iloc[j])>cor_coef_ad and i>j):
-                    #print(f'For NAD ad stock ','Correlation is >{cor_coef_ad} between',lis1[i],'and',corr1[lis1[i]].index[j])
-                    cor1_dict[f'{lis1[i]}']=f'{corr1[lis1[i]].index[j]}'
-        else:
-            for j in range(len(corr1)-1):        
-                if ((corr1[lis1[i]].iloc[j])>cor_coef_else and i>j):
-                    #print(f'For NAD ad stock ','Correlation is >{cor_coef_ad} between',lis1[i],'and',corr1[lis1[i]].index[j])
-                    cor1_dict[f'{lis1[i]}']=f'{corr1[lis1[i]].index[j]}'
-                    raise ValueError("Correlation found! Model discarded")
-    return cor1_dict
-
-#creating a function for merging the colms in the correlated values 
-#new map dict 
-#CHANGE lr to lr_list and same for decay
-def corr_merge(data_promo1,mapped,cor1_dict,hier,spc_hier,cor_coef_ad,cor_coef_else,lr,decay):
-    if cor1_dict:
-        item_1= mapped[list(cor1_dict.keys())[0]]
-        item_2 = mapped[list(cor1_dict.values())[0]]
-        data_promo1[f'{item_1}']=data_promo1[item_1]+data_promo1[item_2]
-        data_promo1.drop(columns=[list(cor1_dict.keys())[0],list(cor1_dict.values())[0],f'ad_stock_s_{item_2}_log',f'ad_stock_s_{item_1}_log'],inplace=True)
-        ad_stock_s_curve_u(data_promo1,item_1,lr,decay)
-        log_var_crores(data_promo1,f'ad_stock_nad_{item_1}')
-        log_var_crores(data_promo1,f'ad_stock_s_{item_1}')
-        cor1_dict.pop(list(cor1_dict.keys())[0])
-        cor1_dict = corr_find(data_promo1,channel_list,hier,spc_hier,cor_coef_ad,cor_coef_else)
-        return corr_merge(data_promo1,mapped,cor1_dict,hier,spc_hier,cor_coef_ad,cor_coef_else,lr,decay)
-    else :
-        return data_promo1
-
 #Now some values can contain 0 values for log function hence finding index of them and replacing them with the second
 #min value
 def rep_zero(data,var):
@@ -131,7 +76,7 @@ def filling_na(data,hier,zone_list,channel_list):
                                    (for_na[zone_list[1]]==zone_promo2)][promo].sum()
                 data.loc[index,promo]=spend_promo
                 
-def pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hier,spc_hier):
+def pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hier,spc_hier,cor_coef_ad=0.7,cor_coef_else=0.8):
 #for brand drop subbrand, for manuf. drop band and subbrand 
     pre2.hier_list = []
     for i in range(config_All_india_HFD[config_All_india_HFD['derived_dimension']=='target_dim']['num_rav_var'].sum()):
@@ -151,7 +96,7 @@ def pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hi
     for i in range(int(p_config['num_rav_var'].sum())):
         a_dict[p_config['rv'+str(i+1)].sum()]='rv'+str(i+1)
     a=test_data_all.rename(columns=a_dict).eval(p_config['formula'])
-    test_data_all['Price']=a[0]*1000
+    test_data_all['Price']=a[0]
     test_data_all.drop(columns=col_drop(hier,pre2.hier_list),inplace=True)
 
     #SPENDS=config_All_india_promo[config_All_india_promo['derived_dimension']=='Spends']['rv'+str(1)].values[0]
@@ -193,16 +138,37 @@ def pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hi
     data_promo1.Price.replace(to_replace={0.0:mean},inplace=True)
     #a=zeroes_finder(data_promo1)
     rep_zero(data_promo1,'PCV')
-
-    for i in (pre2.channel_list):
-        ad_stock_s_curve_u(data_promo1,i,pre2.lr,pre2.decay)
-        log_var_crores(data_promo1,str('ad_stock_nad_')+i)
-        log_var_crores(data_promo1,str('ad_stock_s_')+i)
+    
+    #Contains brand?subbrand or Manuf list like [horlicks,boost]
+    spc_hier_list = list(data_promo1[hier].unique())
+    
+    for i in (channel_list):
+        for j in spc_hier_list: 
+            ad_stock_s_curve_u(data_promo1,i,hier,j,lr,decay)
+            log_var_crores(data_promo1,str('ad_stock_nad_')+i)
+            log_var_crores(data_promo1,str('ad_stock_s_')+i)
     log_var(data_promo1,'Sales')
     log_var(data_promo1,'PCV')
     log_var(data_promo1,'Price')
+    #CHECK FOR CORRELATION AND RELATED CHANGES
+    
+    #GET THE LIST OF COLUMNS TO TAKE CORRELATION MATRIX FOR 
+    chann=np.array(pre2.channel_list)   
+    non_promo_col=np.array(['Price','PCV'])
+    driver_col=[str("ad_stock_nad_")+i for i in chann.astype('object')+ "_log"]+[j for j in non_promo_col.astype('object') + "_log"]
+    lis=driver_col+['Sales_log']
+    
+    #CORRELATION MATRIX
+    corr= data_promo1[lis].corr()
+    
+    cor1_dict= corr_find(data_promo1,pre2.channel_list,cor_coef_ad,cor_coef_else)
+    #get the mapped dictionary ex. 'Digital' : 'ad_stock_nad_Digital_log
+    mapped=new_map_dict(corr_find.corr)
+    data_promo1,pre2.chan_list,pre2.added_col1,pre2.added_col2=corr_merge(data_promo1,pre2.channel_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,pre2.lr,pre2.decay)
+    #we get return as df, new channel_list and the list of exchanges of columns in deque
+    
+    
     return data_promo1
-
 
 
 
