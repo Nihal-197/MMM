@@ -2,8 +2,7 @@ import pandas as pd
 import numpy as np
 import json
 
-#======================POST_PROCESSSING============================
-
+#======================POST_PROCESSSING============================w
 #Now some values can contain 0 values for log function hence finding index of them and replacing them with the second
 #min value
 def col_drop(hier,hier_list):
@@ -40,6 +39,17 @@ def zeroes_finder(data):
             pass
         if (values[i]==0):
             rep_zero(data,index[i])
+          
+#WITH GIVEN BUDGET, WE APPX PARAMETERS FOR MAX SALE BY SCALING DOWN RECOMMENDED VALUES              
+def pred_bugdet(bugdet,rec_values):
+    rec_sum=0
+    for values in list(rec_values.values()):
+        rec_sum+=values
+    for key in list(rec_values.keys()):
+        value = rec_values[key]
+        value = value*bugdet/rec_sum
+        rec_values[key]=value
+    return rec_values
             
 #getting coeficients for each brand     #data_promo1
 #creating a dataframe for the coef.    
@@ -153,6 +163,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,confi
     last=last[list(one_one_dict.values())]
     
     user_input_part2.coeff_1_copy=user_input_part2.coeff_1[list(one_one_dict.keys())]
+    #FINDING THE BEST VALUESs
     user_input_part2.best_values={}
     for key in one_one_dict:
         if user_input_part2.coeff_1_copy[key][0]>=0:
@@ -161,22 +172,29 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,confi
             user_input_part2.best_values[one_one_dict[key]]=last[one_one_dict[key]].min()
     
     #SALES of recommended values
+    #THIS CHANGES IT TO ADSTOCK AND LOG TRANSFORMATION
     user_input_part2.test1=user_inp_2_test(user_input_part2.best_values,user_input_part2.last_val,channel_list,lr,decay,driver)
     user_input_part2.coeff_11=coeff123(data_promo1,hier,spc_hier,model)
+    
     coeff11=user_input_part2.coeff_11.copy()
     coeff11.drop(columns=[hier],inplace=True)
     coeff11.reset_index(inplace=True,drop=True)
     user_input_part2.test1['Intercept']=1
+    
     #user_input_part2.test=user_input_part2.test.append([user_input_part2.test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
     user_input_part2.test1=user_input_part2.test1[coeff11.columns]
-    #combining both list 
+    
+    #combining both list with names and values
     user_input_part2.result1=dict(zip((user_input_part2.coeff_11[hier]),(coeff11*user_input_part2.test1).sum(axis=1)))
     p_sales_recom=p_chg_sales_recom(user_input_part2.result1.get(spc_hier),user_input_part2.last['Sales'+str('_log')].sum())
+    budget = float(data_json['budget'])
+    budget_params = pred_bugdet(budget,user_input_part2.best_values) 
     rounding_off(p_sales)
     rounding_off(user_input_part2.best_values)
     rounding_off(p_sales_recom)
     print(rounding_off(user_input_part2.best_values))
-    output2={'per_of_sales':rounding_off(p_sales),"recommendation":rounding_off(user_input_part2.best_values),"recommended_sales":rounding_off(p_sales_recom)}
+    
+    output2={'per_of_sales':rounding_off(p_sales),"recommendation":rounding_off(user_input_part2.best_values),"Recommendation_on_budget": rounding_off(budget_params),"recommended_sales":rounding_off(p_sales_recom)}
     return output2
     
     
