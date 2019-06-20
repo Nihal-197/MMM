@@ -13,6 +13,27 @@ def col_drop(hier,hier_list):
         if (i==hier):
             col_2_drop=hier_list[j:]
     return col_2_drop
+
+#get those two dictionary make a function with var as a variable to apply for loop over this function and 
+#output should be the roi value and make a dictionary with roi values and integrate it with the final output.
+#====================================================
+#SAME ROI FOR THE COLUMNS MULTIPLIED (MAYBE)
+#====================================================
+def roi_var(last_inp,coeff,hier,var,channel_list,lr,decay,driver):
+    last_copy= last_inp.copy() 
+    last_copy[var]= last_copy[var]*0.9 #for 10% decrease in the value of the last_val, the change in sales are noted
+    #make the transformations and check the sales
+    test= user_inp_2_test(last_copy,last_inp,channel_list,lr,decay,driver) #driver for only useful values
+    test['Intercept']=1
+    #aligning the columns for multiplication
+    test=test[coeff.columns]
+    result=dict(zip((coeff[hier]),(coeff*test).sum(axis=1)))
+    test_sales= result.get(spc_hier)
+    last_sales= last_inp['Sales'+str('_log')].sum()
+    roi=(np.exp(test_sales)-np.exp(last_sales))*100/np.exp(last_sales)
+    return roi
+    
+
 def rounding_off(data):
     data={x:round(y,2) for x,y in data.items() }
     return data
@@ -25,7 +46,7 @@ def log_var_crores(data,var):
     data[var+str('_log')]=np.log(data[var])
 def log_var(data,var):
     if data[var].min()==0:
-        #function for that value take that index and put second min value
+        #function for that value take that index and put second min value 
         rep_zero(data,var)
         data[var+str('_log')]=np.log(data[var])
     else:
@@ -98,7 +119,7 @@ def user_inp_2_test(user_input,last_val,channel_list,lr,decay,driver):
     df_u=pd.DataFrame.from_dict(user_input,orient='index')
     df_u=df_u.T
     user_inp_2_test.user_val=df_u
-    #Converting the user input data into test data
+    #Converting the user input data into test data 
     for i in range(len(channel_list)):
         
         ad_stock_s_curve_user(df_u,last_val,channel_list[i],lr,decay)
@@ -113,11 +134,20 @@ def user_inp_2_test(user_input,last_val,channel_list,lr,decay,driver):
     return df_u
 
 
-def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_india_promo,driver,data_json):
+def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_india_promo,driver,data_json,mod):
     date_promo=[]
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
         date_promo.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
     
+    #FETCHING THE LAST VALUE FROM A PARTICULAR BRAND 
+    
+    #FETCH THE LAST ZONE_REGION WISE DATA FOR ADSTOCKS -_- 
+# =============================================================================
+#     CHANGE THIS FUNCTION FOR THE VALUES of ADSTOCKS 
+#     if mod=='Zone':
+#         user_input_part2.last=data_promo1[data_promo1[hier]==spc_hier].tail(1)
+# 
+# =============================================================================
     user_input_part2.last=data_promo1[data_promo1[hier]==spc_hier].tail(1)
     
     user_input_part2.rem_col=list(set(list(user_input_part2.last.columns))-set([hier]+date_promo +['Sales', 'PCV', 'Price']+channel_list))
@@ -183,7 +213,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,confi
     
     #user_input_part2.test=user_input_part2.test.append([user_input_part2.test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
     user_input_part2.test1=user_input_part2.test1[coeff11.columns]
-    
+        
     #combining both list with names and values
     user_input_part2.result1=dict(zip((user_input_part2.coeff_11[hier]),(coeff11*user_input_part2.test1).sum(axis=1)))
     p_sales_recom=p_chg_sales_recom(user_input_part2.result1.get(spc_hier),user_input_part2.last['Sales'+str('_log')].sum())
@@ -194,8 +224,14 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,confi
     rounding_off(p_sales_recom)
     print(rounding_off(user_input_part2.best_values))
     
-    output2={'per_of_sales':rounding_off(p_sales),"recommendation":rounding_off(user_input_part2.best_values),"Recommendation_on_budget": rounding_off(budget_params),"recommended_sales":rounding_off(p_sales_recom)}
-    return output2
+    #function for roi values with for loop in new channel_list 
+    roi_dict={}
+    for channel in channel_list:
+        roi_dict[channel] = roi_var(user_input_part2.last_val,coeff11,hier,var,channel_list,lr,decay,driver) 
+        
+    
+    output2={'per_of_sales':rounding_off(p_sales),"recommendation":rounding_off(user_input_part2.best_values),"Recommendation_on_budget": rounding_off(budget_params),"recommended_sales":rounding_off(p_sales_recom), "ROI":rounding_off(roi_dict)}
+    return output2 
     
     
 
