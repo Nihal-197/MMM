@@ -53,9 +53,9 @@ def corr_find(data_promo1,channel_list,cor_coef_ad,cor_coef_else):
 added_col1=deque([])
 added_col2=deque([])
 
-def corr_merge(data_promo1,channel_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay):
+def corr_merge(data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay):
     
-    if cor1_dict:
+    if cor1_dict: 
         #print(cor1_dict)
         item_1= mapped[list(cor1_dict.keys())[0]]
         item_2 = mapped[list(cor1_dict.values())[0]]
@@ -63,17 +63,18 @@ def corr_merge(data_promo1,channel_list,mapped,cor1_dict,cor_coef_ad,cor_coef_el
         added_col2.append(item_2)
         data_promo1[item_1]=data_promo1[item_1]+data_promo1[item_2]
         data_promo1.drop(columns=[list(cor1_dict.keys())[0],list(cor1_dict.values())[0],f'ad_stock_s_{item_2}_log',f'ad_stock_s_{item_1}_log'],inplace=True)
-        #print(item_1)
-        ad_stock_s_curve_u(data_promo1,item_1,lr,decay) #change it to the ad_stock_s_curve 
-        log_var_crores(data_promo1,f'ad_stock_nad_{item_1}')
-        log_var_crores(data_promo1,f'ad_stock_s_{item_1}')
+        #print(item_1)  data,data_promo,var,hier,spc_hier,zone_reg_col,lr_list,decay_list 
+        for j in spc_hier_list: 
+            ad_stock_s_curve_u(data_promo1,data_promo,item_1,hier,j,zone_reg_col,lr,decay)
+            log_var_crores(data_promo1,str('ad_stock_nad_')+item_1)
+            log_var_crores(data_promo1,str('ad_stock_s_')+item_1)
         cor1_dict.pop(list(cor1_dict.keys())[0])
         channel_list = list(set(channel_list)- set([item_2]))
         print(item_2)
         print(channel_list)
         cor1_dict = corr_find(data_promo1,channel_list,cor_coef_ad,cor_coef_else)
         print('CORRRELATION DICT',cor1_dict)
-        return corr_merge(data_promo1,channel_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay)
+        return corr_merge(data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay)
     else :
         return data_promo1,channel_list,added_col1,added_col2
 
