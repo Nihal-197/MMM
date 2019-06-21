@@ -1,22 +1,18 @@
 import pandas as pd
 import numpy as np
 import re
+import itertools
 
 #ZONE REGION LEVEL ADSTOCK UPTO LEVEL 5 
 def ad_stock_s_curve_u(data,data_promo,var,hier,spc_hier,zone_reg_col,lr_list,decay_list):
     n=len(zone_reg_col) #NUMBER OF DIFFERENT POSSIBLE ZONE/REGIONS/ANYTHING UPTO 5
     lr_rate=float((lr_list[var]))
-    decay=float(decay_list[var])
-    #WE HAVE USED COMBINATIONS OF DIFFERENT POSSIBLITIES TO AVOID ANY FOR LOOPS
-          #EXAMPLE 
-#         East Rural
-#         East Urban
-#         North Rural
-#         North Urban
-#         South Rural
-#         South Urban
-#         West Rural
-#         West Urban
+    decay=float(decay_list[var]) 
+
+# =============================================================================
+#             testing the data, delete the variable's values
+# =============================================================================
+
     if n==2:
         a=[]
         for an in range(n):
@@ -29,8 +25,6 @@ def ad_stock_s_curve_u(data,data_promo,var,hier,spc_hier,zone_reg_col,lr_list,de
                 t=row[str(var)]
                 ad_stock_value=(1/(1+np.exp(-lr_rate*t)))+ad_stock_value*decay
                 ad_stock_value2=1- np.exp(-lr_rate*t)+ad_stock_value2*decay
-                ad_stock_list.append(ad_stock_value)
-                ad_stock_list2.append(ad_stock_value2)
                 data.loc[index,'ad_stock_s_'+str(var)] =ad_stock_value
                 data.loc[index,'ad_stock_nad_'+str(var)] =ad_stock_value2
 
@@ -45,8 +39,10 @@ def ad_stock_s_curve_u(data,data_promo,var,hier,spc_hier,zone_reg_col,lr_list,de
                 t=row[str(var)]
                 ad_stock_value=(1/(1+np.exp(-lr_rate*t)))+ad_stock_value*decay
                 ad_stock_value2=1- np.exp(-lr_rate*t)+ad_stock_value2*decay
-                ad_stock_list.append(ad_stock_value)
-                ad_stock_list2.append(ad_stock_value2)
+# =============================================================================
+#                 ad_stock_list.append(ad_stock_value)
+#                 ad_stock_list2.append(ad_stock_value2)
+# =============================================================================
                 data.loc[index,'ad_stock_s_'+str(var)] =ad_stock_value
                 data.loc[index,'ad_stock_nad_'+str(var)] =ad_stock_value2
     
@@ -62,8 +58,10 @@ def ad_stock_s_curve_u(data,data_promo,var,hier,spc_hier,zone_reg_col,lr_list,de
                 t=row[str(var)]
                 ad_stock_value=(1/(1+np.exp(-lr_rate*t)))+ad_stock_value*decay
                 ad_stock_value2=1- np.exp(-lr_rate*t)+ad_stock_value2*decay
-                ad_stock_list.append(ad_stock_value)
-                ad_stock_list2.append(ad_stock_value2)
+# =============================================================================
+#                 ad_stock_list.append(ad_stock_value)
+#                 ad_stock_list2.append(ad_stock_value2)
+# =============================================================================
                 data.loc[index,'ad_stock_s_'+str(var)] =ad_stock_value
                 data.loc[index,'ad_stock_nad_'+str(var)] =ad_stock_value2
 
@@ -136,16 +134,19 @@ def filling_na(data,hier,zone_list,channel_list):
                 data.loc[index,promo]=spend_promo
 def pre1(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hier,spc_hier):
 #for brand drop subbrand, for manuf. drop band and subbrand 
-    pre1.hier_list = []
+    hier= MMM1.hier
+    spc_hier = MMM1.spc_hier
+    
+    hier_list = []
     for i in range(config_All_india_HFD[config_All_india_HFD['derived_dimension']=='target_dim']['num_rav_var'].sum()):
-        pre1.hier_list.append(config_All_india_HFD[config_All_india_HFD['derived_dimension']=='target_dim']['rv'+str(i+1)].sum())
-    pre1.date_HFD=[]
+        hier_list.append(config_All_india_HFD[config_All_india_HFD['derived_dimension']=='target_dim']['rv'+str(i+1)].sum())
+    date_HFD=[]
     for i in range(config_All_india_HFD[config_All_india_HFD['derived_dimension']=='date_var']['num_rav_var'].values[0]):
-        pre1.date_HFD.append(config_All_india_HFD[config_All_india_HFD['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
+        date_HFD.append(config_All_india_HFD[config_All_india_HFD['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
 
-    pre1.date_promo=[]
+    date_promo=[]
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
-        pre1.date_promo.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
+        date_promo.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
 
     #creating a Price column
     p_config=config_All_india_promo[config_All_india_promo['derived_dimension']=='Price']
@@ -155,41 +156,39 @@ def pre1(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hi
         a_dict[p_config['rv'+str(i+1)].sum()]='rv'+str(i+1)
     a=test_data_all.rename(columns=a_dict).eval(p_config['formula'])
     test_data_all['Price']=a[0]
-    test_data_all.drop(columns=col_drop(hier,pre1.hier_list),inplace=True)
+    
+    test_data_all.drop(columns=col_drop(hier,hier_list),inplace=True)
 
     #SPENDS=config_All_india_promo[config_All_india_promo['derived_dimension']=='Spends']['rv'+str(1)].values[0]
     PCV=config_All_india_promo[config_All_india_promo['derived_dimension']=='PCV']['rv'+str(1)].values[0]
     SALES=config_All_india_promo[config_All_india_promo['derived_dimension']=='Sales']['rv'+str(1)].values[0]
-    pre1.zone_reg_col=[] 
+    zone_reg_col=[] 
     for i in range(2):
-            pre1.zone_reg_col.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='geo_level']['rv'+str(i+1)].values[0])
+            zone_reg_col.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='geo_level']['rv'+str(i+1)].values[0])
 
     #Below is the code if config file contain the column names of the spends as different columns
-    pre1.channel_list=[]
+    channel_list=[]
     for i in range(int((config_All_india_promo[config_All_india_promo['derived_dimension']=='promotion']['num_rav_var'].sum()))):
-        pre1.channel_list.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='promotion']['rv'+str(i+1)].sum())
+        channel_list.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='promotion']['rv'+str(i+1)].sum())
 
-    pre1.lr={}
-    pre1.decay={}
-    for i in range(len(config_All_india_promo[config_All_india_promo['derived_dimension']=='Learning Rates']['num_rav_var'].sum())):
-        pre1.lr[channel_list[i]]=config_All_india_promo[config_All_india_promo['derived_dimension']=='Learning Rates']['rv'+str(i+1)].sum()
-        pre1.decay[channel_list[i]]=config_All_india_promo[config_All_india_promo['derived_dimension']=='Decay Rates']['rv'+str(i+1)].sum()
+    lr={}
+    decay={}
+    for i in range(config_All_india_promo[config_All_india_promo['derived_dimension']=='Learning Rates']['num_rav_var'].sum()):
+        lr[channel_list[i]]=config_All_india_promo[config_All_india_promo['derived_dimension']=='Learning Rates']['rv'+str(i+1)].sum()
+        decay[channel_list[i]]=config_All_india_promo[config_All_india_promo['derived_dimension']=='Decay Rates']['rv'+str(i+1)].sum()
 
     #treating outliers in the model removing the values over 99%
-    filling_na(data_promo,pre1.hier_list[2],pre1.zone_reg_col,pre1.channel_list)
+    filling_na(data_promo,hier_list[2],zone_reg_col,channel_list)
 
-    list_d_hier=list(pre1.date_promo)+pre1.hier_list[0:3]++pre1.zone_reg_col#list containing [Month,Manufacture,Brand,Subbrand,Zone,Region]
-    data_promo_2=data_promo.groupby(by=list(set(list_d_hier)-set(col_drop(hier,pre1.hier_list)))).sum().reset_index()
-    data_promo1= pd.merge(test_data_all,data_promo_2, on =list(set(list_d_hier)-set(list(col_drop(hier,pre1.hier_list)))),how='left')
+    list_d_hier=list(date_promo)+hier_list[0:3]+zone_reg_col#list containing [Month,Manufacture,Brand,Subbrand,Zone,Region]
+    data_promo_2=data_promo.groupby(by=list(set(list_d_hier)-set(col_drop(hier,hier_list)))).sum().reset_index()
+    data_promo1= pd.merge(test_data_all,data_promo_2, on =list(set(list_d_hier)-set(list(col_drop(hier,hier_list)))),how='left')
     data_promo1.rename(columns={SALES:'Sales',PCV:'PCV'},inplace=True)
 
     #columns not to drop(non promo,sales,promo(nad stock),date)
     non_promo_col=['Price','PCV']
-    non_drop_col=list(pre1.date_promo)+[hier]+list(pre1.channel_list)+['Sales']+non_promo_col
-
-    #droppping other columns
-    data_promo1.drop(columns=list(set(list(data_promo1.columns))-set(non_drop_col)),inplace=True)
-
+    non_drop_col=list(date_promo)+[hier]+list(channel_list)+['Sales']+non_promo_col + zone_reg_col
+   
     #replacing any nan due to division for taking log later
     mean=data_promo1['Price'].mean()
     data_promo1['Price'].fillna(mean,inplace=True)
@@ -198,31 +197,39 @@ def pre1(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hi
     rep_zero(data_promo1,'PCV')
 
     spc_hier_list = list(data_promo1[hier].unique())
+     #droppping other columns 
+    data_promo1.drop(columns=list(set(list(data_promo1.columns))-set(non_drop_col)),inplace=True)
+
     
     for i in (channel_list):
         for j in spc_hier_list: 
-            ad_stock_s_curve_u(data_promo1,data_promo,i,hier,j,pre1.zone_reg_col,lr,decay)
+            ad_stock_s_curve_u(data_promo1,data_promo,i,hier,j,zone_reg_col,lr,decay)
             log_var_crores(data_promo1,str('ad_stock_nad_')+i)
             log_var_crores(data_promo1,str('ad_stock_s_')+i)
     log_var(data_promo1,'Sales')
     log_var(data_promo1,'PCV')
     log_var(data_promo1,'Price')
     
-    #CHECK FOR CORRELATION AND RELATED CHANGES
+    #CHECK FOR CORRELATION AND RELATED CHANGES 
     
     #GET THE LIST OF COLUMNS TO TAKE CORRELATION MATRIX FOR 
-    chann=np.array(pre1.channel_list)   
+    chann=np.array(channel_list)   
     non_promo_col=np.array(['Price','PCV'])
     driver_col=[str("ad_stock_nad_")+i for i in chann.astype('object')+ "_log"]+[j for j in non_promo_col.astype('object') + "_log"]
     lis=driver_col+['Sales_log']
     
-    #CORRELATION MATRIX
-    corr= data_promo1[lis].corr()
+    #CORRELATION MATRIX 
+    corr= data_promo1[lis].corr() 
     
-    cor1_dict= corr_find(data_promo1,pre1.channel_list,cor_coef_ad,cor_coef_else)
+    #THIS IS SUBJECTED TO CHANGE -- threshold for the correlation between adstocks and second one in case of coerrelation of PCV AND PRICE with any other vairable 
+    
+    cor_coef_ad,cor_coef_else = 0.7,0.8
+    
+    cor1_dict= corr_find(data_promo1,channel_list,cor_coef_ad,cor_coef_else)
     #get the mapped dictionary ex. 'Digital' : 'ad_stock_nad_Digital_log
-    mapped=new_map_dict(corr_find.corr)
-    data_promo1,pre1.chan_list,pre1.added_col1,pre1.added_col2=corr_merge(data_promo1,pre1.channel_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,pre1.lr,pre1.decay)
+    mapped=new_map_dict(corr_find.corr) 
+    #data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay
+    data_promo1,chann_list,added_col1,added_col2=corr_merge(data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay)
     #we get return as df, new channel_list and the list of exchanges of columns in deque
     
     return data_promo1
