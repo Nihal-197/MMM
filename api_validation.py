@@ -1,5 +1,5 @@
 import pandas as pd 
-import re
+import re 
 def has_string(string):
     return bool(re.search('[a-zA-Z]',string))
 def has_number(string):
