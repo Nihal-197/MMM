@@ -28,11 +28,11 @@ def vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user):
     for i in chann_list:
         vol[chann_list]= data_promo1[data_promo1[hier]==spc_hier][i].sum()*coeff_1_user[i]/t_sales
     for i in range(4):
-        vol[i]=data_promo1[data_promo1[hier]==spc_hier][i].sum()*coeff_1_user[i]/t_sales
+        vol[str('season_')+i]=data_promo1[data_promo1[hier]==spc_hier][i].sum()*coeff_1_user[i]/t_sales
     vol['Price']=data_promo1[data_promo1[hier]==spc_hier]['Price'].sum()*coeff_1_user['Price']/t_sales
     vol['PCV']=data_promo1[data_promo1[hier]==spc_hier]['PCV'].sum()*coeff_1_user['PCV']/t_sales
-        
-    return vol
+    vol['Base_sales']= len(data_promo1[data_promo1[hier]==spc_hier]['PCV'])*coeff_1_user['Intercept']/t_sales
+    return vol 
 
 def rounding_off(data):
     data={x:round(y,2) for x,y in data.items() if type(y) == float}
@@ -76,4 +76,3 @@ def user_input(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_
     
 
 
-a
