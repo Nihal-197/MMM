@@ -82,17 +82,28 @@ def coeff123(data_promo1,hier,spc_hier,Model):
     a['Intercept']=Model.fe_params[0]
     a=a.to_frame().transpose()
     return a    
-def p_chg_sales(test,last):
+
+def p_chg_sales_log(test,last):
     change=(np.exp(test)-np.exp(last))*100/np.exp(last)
     p_changes={'per_sales':change,'appx_sales':np.exp(test)}
     #json_p_changes=json.dumps(p_changes)
     return p_changes
 
-def p_chg_sales_recom(test,last):
+def p_chg_sales(test,last):
+    change=(test-last)*100/last
+    p_changes={'per_sales':change,'appx_sales':test}
+    #json_p_changes=json.dumps(p_changes)
+    return p_changes
+
+def p_chg_sales_recom_log(test,last):
     change=(np.exp(test)-np.exp(last))*100/np.exp(last)
     p_changes={'recommended_per_sales':change,'recommended_appx_sales':np.exp(test)}
     return p_changes
 
+def p_chg_sales_recom(test,last):
+    change=(test-last)*100/last
+    p_changes={'recommended_per_sales':change,'recommended_appx_sales':test}
+    return p_changes 
 
 #variable for transformation is var lr rate is 0.1 decay is 0.69315 and defualt value for ar_coeff is 0.3
 def ad_stock_s_curve_user(data,prev_data,var,lr_list,decay_list):
@@ -139,15 +150,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,confi
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
         date_promo.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
     
-    #FETCHING THE LAST VALUE FROM A PARTICULAR BRAND 
-    
-    #FETCH THE LAST ZONE_REGION WISE DATA FOR ADSTOCKS -_- 
-# =============================================================================
-#     CHANGE THIS FUNCTION FOR THE VALUES of ADSTOCKS 
-#     if mod=='Zone':
-#         user_input_part2.last=data_promo1[data_promo1[hier]==spc_hier].tail(1)
-# 
-# =============================================================================
+
     user_input_part2.last=data_promo1[data_promo1[hier]==spc_hier].tail(1)
     
     user_input_part2.rem_col=list(set(list(user_input_part2.last.columns))-set([hier]+date_promo +['Sales', 'PCV', 'Price']+channel_list))
@@ -209,7 +212,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,confi
     coeff11=user_input_part2.coeff_11.copy()
     coeff11.drop(columns=[hier],inplace=True)
     coeff11.reset_index(inplace=True,drop=True)
-    user_input_part2.test1['Intercept']=1
+    user_input_part2.test1['Intercept']=1 
     user_input_part2.test2 = user_input_part2.test1.copy()
     #user_input_part2.test=user_input_part2.test.append([user_input_part2.test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
     user_input_part2.test1=user_input_part2.test1[coeff11.columns]
