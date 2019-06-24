@@ -167,6 +167,14 @@ def pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hi
     data_promo1,pre2.chan_list,pre2.added_col1,pre2.added_col2=corr_merge(data_promo1,pre2.channel_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,pre2.lr,pre2.decay)
     #we get return as df, new channel_list and the list of exchanges of columns in deque
     
+    #GET DUMMIES FOR SEASONALITY 
+    data_promo1[date_promo[0]]=data_promo1[date_promo[0]].dt.month
+    #CREATING 4 BINS 
+    data_promo1[date_promo[0]]=pd.cut(data_promo1[date_promo[0]],4,labels=range(4))
+    #CREATING DUMMY VARIABLES 
+    daa=pd.get_dummies(data_promo1[date_promo[0]])
+    #JOIN BOTH
+    data_promo1 = data_promo1.join(daa)
     
     return data_promo1
 
