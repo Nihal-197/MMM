@@ -7,21 +7,37 @@ from sklearn.metrics import r2_score
 def Model(data_promo1,hier,channel_list):
     non_promo_col=np.array(['Price','PCV'])
     chann=np.array(channel_list)
+        
+# =============================================================================
+#     #Model 1 with nad curve and log log model 
+#     Model.driver1 = [str("ad_stock_nad_")+i for i in chann.astype('object')+ "_log"]+[j for j in non_promo_col.astype('object') + "_log"]
+#     eqn1=' ~ '+' + '.join([i for i in Model.driver1])
+#     md1=smf.mixedlm('Sales_log' + eqn1,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1)
+#     Model.mdf1=md1.fit(method='lbfgs') 
+# =============================================================================
     
-    #Model 1 with nad curve
-    Model.driver1 = [str("ad_stock_nad_")+i for i in chann.astype('object')+ "_log"]+[j for j in non_promo_col.astype('object') + "_log"]
+    Model.driver1 = [str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object') ]
     eqn1=' ~ '+' + '.join([i for i in Model.driver1])
-    md1=smf.mixedlm('Sales_log' + eqn1,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1)
-    Model.mdf1=md1.fit()
+    md1=smf.mixedlm('Sales' + eqn1,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1)
+    Model.mdf1=md1.fit(method='lbfgs')
     
-    #Model 2 with S curve 
-    Model.driver2 = [str("ad_stock_s_")+i for i in chann.astype('object')+ "_log"]+[j for j in non_promo_col.astype('object') + "_log"]
-    eqn2=' ~ '+' + '.join([i for i in Model.driver2])
-    md2=smf.mixedlm('Sales_log' + eqn2,data = data_promo1,groups=data_promo1[hier],re_formula=eqn2)
-    Model.mdf2=md2.fit()
+    #MODEL WITH SEASONALITY 
+    Model.driver1_sea = [str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object')]+list(range(4))
+    eqn1_sea=' ~ '+' + '.join([i for i in Model.driver1_sea])
+    md1_sea=smf.mixedlm('Sales' + eqn1_sea,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1_sea)
+    Model.mdf1_sea=md1_sea.fit(method='lbfgs')
     
+# =============================================================================
+#     #Model 2 with S curve 
+#     Model.driver2 = [str("ad_stock_s_")+i for i in chann.astype('object')+ "_log"]+[j for j in non_promo_col.astype('object') + "_log"]
+#     eqn2=' ~ '+' + '.join([i for i in Model.driver2])
+#     md2=smf.mixedlm('Sales_log' + eqn2,data = data_promo1,groups=data_promo1[hier],re_formula=eqn2)
+#     Model.mdf2=md2.fit(method='cg')
+# =============================================================================
+     
     Model.driver=Model.driver1
     Model.mdf=Model.mdf1
+    
 # =============================================================================
 #     
 #     acc1 = r2_score(data_promo1['Sales_log'],Model.mdf1.fittedvalues)
@@ -37,3 +53,5 @@ def Model(data_promo1,hier,channel_list):
 # =============================================================================
 
 #==================================================================
+    
+#Model(data_promo1,hier,chann_list)
