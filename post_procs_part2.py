@@ -19,21 +19,21 @@ def col_drop(hier,hier_list):
 #====================================================
 #SAME ROI FOR THE COLUMNS MULTIPLIED (MAYBE)
 #====================================================
-def roi_var(last_inp,coeff,hier,var,channel_list,lr,decay,driver):
-    last_copy= last_inp.copy() 
-    last_copy[var]= last_copy[var]*0.9 #for 10% decrease in the value of the last_val, the change in sales are noted
-    #make the transformations and check the sales
-    test= user_inp_2_test(last_copy,last_inp,channel_list,lr,decay,driver) #driver for only useful values
-    test['Intercept']=1
+def roi_var(last_inp,user_input,coeff,hier,var,channel_list,lr,decay,driver):
+    last_copy= last_input.copy()
+    last_copy[var]= user_input[var] # the change in a single var keeping rezt as constant 
+    #make the transformations and check the sales 
+    #user_input['Intercept']=1
     #aligning the columns for multiplication
-    test=test[coeff.columns]
-    result=dict(zip((coeff[hier]),(coeff*test).sum(axis=1)))
-    test_sales= result.get(spc_hier)
-    last_sales= last_inp['Sales'+str('_log')].sum()
-    roi=(np.exp(test_sales)-np.exp(last_sales))*100/np.exp(last_sales)
+    user_input=user_input[coeff.columns]
+    result=dict(zip((coeff[hier]),(coeff*user_input).sum(axis=1)))
+    test_sales= result.get(spc_hier) 
+    #last_sales= last_inp['Sales'+str('_log')].sum()
+    last_sales= last_inp['Sales'].sum() 
+    #roi=(np.exp(test_sales)-np.exp(last_sales))*100/np.exp(last_sales)
+    roi=(test_sales-last_sales)*100/last_sales 
     return roi
     
-
 def rounding_off(data):
     data={x:round(y,2) for x,y in data.items() }
     return data
@@ -131,7 +131,7 @@ def user_inp_2_test(user_input,last_val,channel_list,lr,decay,driver):
     #keeping the desired variables
     df_u=df_u[driver]
     
-    return df_u
+    return df_u 
 
 
 def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_india_promo,driver,data_json,mod):
@@ -210,7 +210,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,confi
     coeff11.drop(columns=[hier],inplace=True)
     coeff11.reset_index(inplace=True,drop=True)
     user_input_part2.test1['Intercept']=1
-    
+    user_input_part2.test2 = user_input_part2.test1.copy()
     #user_input_part2.test=user_input_part2.test.append([user_input_part2.test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
     user_input_part2.test1=user_input_part2.test1[coeff11.columns]
         
@@ -227,7 +227,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,confi
     #function for roi values with for loop in new channel_list 
     roi_dict={}
     for channel in channel_list:
-        roi_dict[channel] = roi_var(user_input_part2.last_val,coeff11,hier,var,channel_list,lr,decay,driver) 
+        roi_dict[channel] = roi_var(user_input_part2.last_val,user_input_part2.test2,coeff11,hier,var,channel_list,lr,decay,driver) 
         
     
     output2={'per_of_sales':rounding_off(p_sales),"recommendation":rounding_off(user_input_part2.best_values),"Recommendation_on_budget": rounding_off(budget_params),"recommended_sales":rounding_off(p_sales_recom), "ROI":rounding_off(roi_dict)}
