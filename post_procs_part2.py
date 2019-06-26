@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import json
-
+import re
 #======================POST_PROCESSSING============================w
 #Now some values can contain 0 values for log function hence finding index of them and replacing them with the second
 #min value
@@ -155,12 +155,19 @@ def user_cor_adj(user_inp,added_col1, added_col2):
         user_inp.pop(added_col2[i])
     return user_inp
 
-def create_cson(data_promo1,hier,spc_hier,date,target_inp):
+def create_cson(data_promo1,hier,spc_hier,date_promo,target_inp):
     #check the lasat season of the data_promo and if the last 3 values of that season are same 
     # then put next season
-    last_sea = data_promo1[data_promo1[hier]==spc_hier][date].tail(1)
-    data_promo1[data_promo1[hier]==spc_hier][last_sea].tail(3)
-    
+    last_sea = data_promo1[data_promo1[hier]==spc_hier].tail(1)[date_promo].values[0]
+    val= data_promo1[data_promo1[hier]==spc_hier][last_sea].tail(3).sum().astype('int')
+    sea = re.findall('\d',last_sea[0])
+    for i in range(4):
+        target_inp[f'season_{i}']=0
+    if val==3: 
+        new_cson = (int(sea[0])+1)%4 #TO GET NEXT SEASON 
+        target_inp[f'season_{new_cson}']=1
+    else : 
+        target_inp[last_sea[0]]=1
     return target_inp
 
 def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,decay,config_All_india_promo,driver,data_json,mod):
@@ -229,7 +236,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,
     for i in range(len(chann_list)):
         one_one_dict[chann_list[i]]=coeff_1.columns[i]
         one_one_dict['Price']='Price'
-        one_one_dict['PCV']='PCV'
+        one_one_dict['PCV']='PCV' 
 # =============================================================================
 #     one_one_dict['Price']='Price_log'
 #     one_one_dict['PCV']='PCV_log'
