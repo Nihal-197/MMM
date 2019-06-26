@@ -23,13 +23,14 @@
 ### The Output contains:-
 1. Last dated(Month/Year/ whatever specified) data.
 2. The impact of the attributes on the Sales or target variable.
+3. Volume distribution of each of the variables given in the data.
 
 ### Further inputs required for predicting the target variable
 - All the values for numerical data which are subjected to change and we encounter them as our primary variable for prediction.
 
 ### The Output contains:-
-- Predicted sales or target variable
+- Predicted sales or target variable.
 - Percentage of the change as compared to the last dated value.
 - ##### A recommendation based on the coefficients(derived from the fixed and random effects) for all the parameteres provided.
 - Recommended Sales or value of target variable.
-- Based on the provided Budget the optimized parameters for max sales
+- Based on the provided Budget the optimized parameters for max sales.
