@@ -51,11 +51,9 @@ def rounding_off(data):
     data={x:round(y,2) for x,y in data.items() if type(y) != str}
     return data
 
-# =============================================================================
-# def rounding_off(data):
-#     data={x:round(y,2) for x,y in data.items() if ((type(y) == float) or (type(y)==int)) }
-#     return data
-# =============================================================================
+def rounding_off(data):
+    data={x:round(y,2) for x,y in data.items() if ((type(y) == float) or (type(y) == np.float64) or (type(y)==int)) }
+    return data
 #getting coeficients for each brand     #data_promo1
 #creating a dataframe for the coef.    
 def coeff123(data_promo1,hier,spc_hier,Model):
@@ -85,7 +83,8 @@ def user_input(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_
     vol_dist=vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user)
     vol_local= vol_combo(added_col1,added_col2)
     for i in chann_list:
-        vol_dist[vol_local[i]]=vol_dist.pop(i)
+        if (vol_local):
+            vol_dist[vol_local[i]]=vol_dist.pop(i)
 # =============================================================================
 #     rounding_off(last_val_dict)
 #     rounding_off(coeff_1_user)
