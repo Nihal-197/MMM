@@ -3,9 +3,12 @@ import numpy as np
 import re
 import itertools
 
+def log_var_crores(data,var):
+    data[var+str('_log')]=np.log(data[var])
 #ZONE REGION LEVEL ADSTOCK UPTO LEVEL 5 
 def ad_stock_s_curve_u(data,data_promo,var,hier,spc_hier,zone_reg_col,lr_list,decay_list):
     n=len(zone_reg_col) #NUMBER OF DIFFERENT POSSIBLE ZONE/REGIONS/ANYTHING UPTO 5
+    
     lr_rate=float((lr_list[var]))
     decay=float(decay_list[var]) 
 
@@ -80,9 +83,6 @@ def ad_stock_s_curve_u(data,data_promo,var,hier,spc_hier,zone_reg_col,lr_list,de
                 ad_stock_list2.append(ad_stock_value2)
                 data.loc[index,'ad_stock_s_'+str(var)] =ad_stock_value
                 data.loc[index,'ad_stock_nad_'+str(var)] =ad_stock_value2
-
-                
-                
         #data['ad_stock_l_'+str(var)]=tsa.filters.filtertools.recursive_filter(data[var],ar_coeff)
 def col_drop(hier,hier_list):
     col_2_drop=[]
@@ -132,11 +132,12 @@ def filling_na(data,hier,zone_list,channel_list):
                 spend_promo=for_na[(for_na[hier]==subbrand_promo) & (for_na[zone_list[0]]==zone_promo1) & 
                                    (for_na[zone_list[1]]==zone_promo2)][promo].sum()
                 data.loc[index,promo]=spend_promo
-def pre1(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hier,spc_hier):
+def pre1(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hier,spc_hier,cor_coef_ad=0.7,cor_coef_else=0.8):
 #for brand drop subbrand, for manuf. drop band and subbrand 
     hier= MMM1.hier
     spc_hier = MMM1.spc_hier
-    
+    cor_coef_ad=0.9
+    cor_coef_else=0.8
     hier_list = []
     for i in range(config_All_india_HFD[config_All_india_HFD['derived_dimension']=='target_dim']['num_rav_var'].sum()):
         hier_list.append(config_All_india_HFD[config_All_india_HFD['derived_dimension']=='target_dim']['rv'+str(i+1)].sum())
@@ -204,38 +205,38 @@ def pre1(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hi
     for i in (channel_list):
         for j in spc_hier_list: 
             ad_stock_s_curve_u(data_promo1,data_promo,i,hier,j,zone_reg_col,lr,decay)
-            log_var_crores(data_promo1,str('ad_stock_nad_')+i)
-            log_var_crores(data_promo1,str('ad_stock_s_')+i)
-    log_var(data_promo1,'Sales')
-    log_var(data_promo1,'PCV')
-    log_var(data_promo1,'Price')
+# =============================================================================
+#             log_var_crores(data_promo1,str('ad_stock_nad_')+i)
+#             log_var_crores(data_promo1,str('ad_stock_s_')+i)
+# =============================================================================
+# =============================================================================
+#     log_var(data_promo1,'Sales')
+#     log_var(data_promo1,'PCV')
+#     log_var(data_promo1,'Price')
+# =============================================================================
     
     #CHECK FOR CORRELATION AND RELATED CHANGES 
     
     #GET THE LIST OF COLUMNS TO TAKE CORRELATION MATRIX FOR 
     chann=np.array(channel_list)   
     non_promo_col=np.array(['Price','PCV'])
-    driver_col=[str("ad_stock_nad_")+i for i in chann.astype('object')+ "_log"]+[j for j in non_promo_col.astype('object') + "_log"]
-    lis=driver_col+['Sales_log']
+    driver_col=[str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object') ]
+    lis=driver_col+['Sales']
     
     #CORRELATION MATRIX 
     corr= data_promo1[lis].corr() 
-    
-    #THIS IS SUBJECTED TO CHANGE -- threshold for the correlation between adstocks and second one in case of coerrelation of PCV AND PRICE with any other vairable 
-    
-    cor_coef_ad,cor_coef_else = 0.7,0.8
-    
+     
     cor1_dict= corr_find(data_promo1,channel_list,cor_coef_ad,cor_coef_else)
     #get the mapped dictionary ex. 'Digital' : 'ad_stock_nad_Digital_log
     mapped=new_map_dict(corr_find.corr) 
-    #data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay
-    data_promo1,chann_list,added_col1,added_col2=corr_merge(data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay)
+    
+    data_promo1,chann_list,added_col1,added_col2=corr_merge_zone(data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay)
     #we get return as df, new channel_list and the list of exchanges of columns in deque
     
     #GET DUMMIES FOR SEASONALITY 
     data_promo1[date_promo[0]]=data_promo1[date_promo[0]].dt.month
     #CREATING 4 BINS 
-    data_promo1[date_promo[0]]=pd.cut(data_promo1[date_promo[0]],4,labels=range(4))
+    data_promo1[date_promo[0]]=pd.cut(data_promo1[date_promo[0]],4,labels=[str('season_')+str(i) for i in range(4)])
     #CREATING DUMMY VARIABLES 
     daa=pd.get_dummies(data_promo1[date_promo[0]])
     #JOIN BOTH
