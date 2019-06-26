@@ -25,7 +25,7 @@ def vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user):
     t_sales= data_promo1[data_promo1[hier]==spc_hier]['Sales'].sum()
     vol= {} 
     for i in chann_list:
-        vol[i]= (data_promo1[data_promo1[hier]==spc_hier][i].sum())*coeff_1_user[0][str('ad_stock_nad_')+str(i)]/t_sales
+        vol[i]= (data_promo1[data_promo1[hier]==spc_hier][str('ad_stock_nad_')+str(i)].sum())*coeff_1_user[0][str('ad_stock_nad_')+str(i)]/t_sales
     for j in range(4): 
         vol[str('season_')+str(j)]=(data_promo1[data_promo1[hier]==spc_hier][str('season_')+str(j)].sum())*coeff_1_user[0][str('season_')+str(j)]/t_sales
     vol['Price']=(data_promo1[data_promo1[hier]==spc_hier]['Price'].sum())*coeff_1_user[0]['Price']/t_sales
@@ -33,14 +33,29 @@ def vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user):
     vol['Base_sales']= len(data_promo1[data_promo1[hier]==spc_hier]['PCV'])*coeff_1_user[0]['Intercept']/t_sales
     return vol 
 
+#SINCE WE HAVE FEWER COLUMNS LEFT BECAUSE OF CORRELATION WE ShOW THE LEFT ONES AS COMBINATION 
+def vol_combo(added_col1,added_col2):
+    local_var  = {} 
+    for i in range(len(added_col1)):
+        if added_col1[i] in local_var:
+            if added_col2[i] in local_var:
+                local_var[added_col1[i]] = str(local_var[added_col1[i]]) + str('*') + str(local_var[added_col2[i]])
+                local_var.pop(added_col2[i])
+            else :
+                local_var[added_col1[i]] = str(local_var[added_col1[i]]) + str('*') + str(added_col2[i])
+        else :
+            local_var[added_col1[i]] = str(added_col1[i])+str('*')+ str(added_col2[i])
+    return local_var
 
 def rounding_off(data):
     data={x:round(y,2) for x,y in data.items() if type(y) != str}
     return data
 
-def rounding_off(data):
-    data={x:round(y,2) for x,y in data.items() if ((type(y) == float) or (type(y)==int)) }
-    return data
+# =============================================================================
+# def rounding_off(data):
+#     data={x:round(y,2) for x,y in data.items() if ((type(y) == float) or (type(y)==int)) }
+#     return data
+# =============================================================================
 #getting coeficients for each brand     #data_promo1
 #creating a dataframe for the coef.    
 def coeff123(data_promo1,hier,spc_hier,Model):
@@ -68,12 +83,15 @@ def user_input(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_
     
     #CREATING A VOLUME DISTRIBUTION BAR CHART (CONTRIBUTION) 
     vol_dist=vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user)
-    
+    vol_local= vol_combo(added_col1,added_col2)
+    for i in chann_list:
+        vol_dist[vol_local[i]]=vol_dist.pop(i)
 # =============================================================================
 #     rounding_off(last_val_dict)
 #     rounding_off(coeff_1_user)
 # =============================================================================
-    output={'last_param':rounding_off(last_val_dict[0]),'coeff':rounding_off(coeff_1_user[0])}
+        
+    output={'last_param':rounding_off(last_val_dict[0]),'coeff':rounding_off(coeff_1_user[0]),'Vol_distribution':rounding_off(vol_dist)}
 
     return output
     
