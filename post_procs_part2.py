@@ -155,6 +155,7 @@ def user_cor_adj(user_inp,added_col1, added_col2):
         user_inp.pop(added_col2[i])
     return user_inp
 
+#TO ADDED SEASONS IN OUR USER'S INPUTS 
 def create_cson(data_promo1,hier,spc_hier,date_promo,target_inp):
     #check the lasat season of the data_promo and if the last 3 values of that season are same 
     # then put next season
@@ -163,7 +164,7 @@ def create_cson(data_promo1,hier,spc_hier,date_promo,target_inp):
     sea = re.findall('\d',last_sea[0])
     for i in range(4):
         target_inp[f'season_{i}']=0
-    if val==3: 
+    if val.values[0]==3: 
         new_cson = (int(sea[0])+1)%4 #TO GET NEXT SEASON 
         target_inp[f'season_{new_cson}']=1
     else : 
@@ -202,15 +203,9 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,
     for i in range(len(channel_list)):
         user_inp[channel_list[i]]=float(data_json[channel_list[i]])
     #keeping specified cols 
-    
-    #TEMPORARY SEASON IN DATA JSON -----------------------------------------
-    #=======================================================================
-    user_inp['season_0']=0
-    user_inp['season_1']=1
-    user_inp['season_2']=0
-    user_inp['season_3']=0
-    #======================================================================
-    #----------------------------------------------------------------------
+
+    create_cson(data_promo1,hier,spc_hier,date_promo,user_inp)
+
     user_inp=user_cor_adj(user_inp, added_col1,added_col2)
     
     test=user_inp_2_test(user_inp,last_val,chann_list,lr,decay,Model.driver1_sea) 
@@ -261,14 +256,8 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,
     #THIS CHANGES IT TO ADSTOCK AND LOG TRANSFORMATION 
     test1=user_inp_2_test(best_values,last_val,chann_list,lr,decay,Model.driver1)
 
-    #TEMPORARY SEASON IN DATA JSON -----------------------------------------
-    #=======================================================================
-    test1['season_0']=0
-    test1['season_1']=1
-    test1['season_2']=0
-    test1['season_3']=0
-    #======================================================================
-    #----------------------------------------------------------------------
+    create_cson(data_promo1,hier,spc_hier,date_promo,test1)
+
     test1['Intercept']=1 
     #test=test.append([test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
     test1=test1[coeff1.columns]      
