@@ -19,8 +19,8 @@ def col_drop(hier,hier_list):
 #====================================================
 #SAME ROI FOR THE COLUMNS MULTIPLIED (MAYBE)
 #====================================================
-def roi_var(last_inp,user_input,coeff,hier,var,channel_list,lr,decay,driver):
-    last_copy= last_input.copy()
+def roi_var(last_val,user_input,coeff,hier,var,channel_list,lr,decay,driver):
+    last_copy= last_val.copy()
     last_copy[var]= user_input[var] # the change in a single var keeping rezt as constant 
     #make the transformations and check the sales 
     #user_input['Intercept']=1
@@ -61,14 +61,17 @@ def zeroes_finder(data):
         if (values[i]==0):
             rep_zero(data,index[i])
           
-#WITH GIVEN BUDGET, WE APPX PARAMETERS FOR MAX SALE BY SCALING DOWN RECOMMENDED VALUES              
-def pred_bugdet(bugdet,rec_values):
-    rec_sum=0
+#WITH GIVEN BUDGET, WE APPX PARAMETERS FOR MAX SALE BY SCALING DOWN RECOMMENDED VALUES IN SPENDS              
+def pred_bugdet(budget,rec_values):
+    rec_sum=0 
+    
+    rec_values.pop('PCV') 
+    rec_values.pop('Price')
     for values in list(rec_values.values()):
         rec_sum+=values
     for key in list(rec_values.keys()):
         value = rec_values[key]
-        value = value*bugdet/rec_sum
+        value = value*budget/rec_sum
         rec_values[key]=value
     return rec_values
             
@@ -106,6 +109,7 @@ def p_chg_sales_recom(test,last):
     return p_changes 
 
 #variable for transformation is var lr rate is 0.1 decay is 0.69315 and defualt value for ar_coeff is 0.3
+        
 def ad_stock_s_curve_user(data,prev_data,var,lr_list,decay_list):
     ad_stock_list=[]
     ad_stock_list2=[]
@@ -120,120 +124,165 @@ def ad_stock_s_curve_user(data,prev_data,var,lr_list,decay_list):
         ad_stock_value=(1/(1+np.exp(-lr_rate*t)))+ad_stock_value*decay
         ad_stock_value2=1- np.exp(-lr_rate*t)+ad_stock_value2*decay
         ad_stock_list.append(ad_stock_value)
-        ad_stock_list2.append(ad_stock_value2)
+        ad_stock_list2.append(ad_stock_value2) 
         
     data['ad_stock_s_'+str(var)]=ad_stock_list
     data['ad_stock_nad_'+str(var)]=ad_stock_list2
-    
     
 def user_inp_2_test(user_input,last_val,channel_list,lr,decay,driver):
     df_u=pd.DataFrame.from_dict(user_input,orient='index')
     df_u=df_u.T
     user_inp_2_test.user_val=df_u
-    #Converting the user input data into test data 
     for i in range(len(channel_list)):
-        
         ad_stock_s_curve_user(df_u,last_val,channel_list[i],lr,decay)
-        log_var_crores(df_u,str('ad_stock_nad_')+channel_list[i])
-        log_var_crores(df_u,str('ad_stock_s_')+channel_list[i])
-    log_var(df_u,'PCV')
-    log_var(df_u,'Price')
-    
+# =============================================================================
+#             log_var_crores(df_u,str('ad_stock_nad_')+channel_list[i])
+#             log_var_crores(df_u,str('ad_stock_s_')+channel_list[i])
+# =============================================================================
+# =============================================================================
+#     log_var(df_u,'PCV')
+#     log_var(df_u,'Price')
+# =============================================================================
     #keeping the desired variables
     df_u=df_u[driver]
     
     return df_u 
 
+#function for adjusting the varibles those were highly correlated in the data
+def user_cor_adj(user_inp,added_col1, added_col2):
+    for i in range(len(added_col1)):
+        user_inp[added_col1[i]] = user_inp[added_col1[i]]+user_inp[added_col2[i]]
+        user_inp.pop(added_col2[i])
+    return user_inp
 
-def user_input_part2(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_india_promo,driver,data_json,mod):
-    date_promo=[]
+def create_cson(data_promo1,hier,spc_hier,date,target_inp):
+    #check the lasat season of the data_promo and if the last 3 values of that season are same 
+    # then put next season
+    last_sea = data_promo1[data_promo1[hier]==spc_hier][date].tail(1)
+    data_promo1[data_promo1[hier]==spc_hier][last_sea].tail(3)
+    
+    return target_inp
+
+def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,decay,config_All_india_promo,driver,data_json,mod):
+    
+    #------------- DELETE THESE VARIABLES -------------------------
+    data_json={
+    "Digital": 0.4, 
+    "OOH": 0.3,
+    "Print": 0.3,
+    "Radio": 0.3, 
+    "TV": 1.2,
+    "PCV": 30, 
+    "Price": 0.5,
+    "Budget" : 5
+    }#REMOVE SeASON FROM THIS DATA JSON
+    #--------------------------------------------------------------
+    
+    date_promo=[] 
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
         date_promo.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
     
-
-    user_input_part2.last=data_promo1[data_promo1[hier]==spc_hier].tail(1)
+    last=data_promo1[data_promo1[hier]==spc_hier].tail(1)
+    last =user_cor_adj(last,added_col1,added_col2)
+    rem_col=list(set(list(last.columns))-set([hier]+date_promo +['Sales', 'PCV', 'Price']+chann_list+ [str('season_')+str(i) for i in range(4)]))
     
-    user_input_part2.rem_col=list(set(list(user_input_part2.last.columns))-set([hier]+date_promo +['Sales', 'PCV', 'Price']+channel_list))
+    last_val=last.drop(columns=rem_col)
+    last_val_dict= last_val.reindex().to_dict('records')
+    user_inp={}
+    user_inp['PCV']=float(data_json['PCV'])
+    user_inp['Price']=float(data_json['Price'])
     
-    user_input_part2.last_val=user_input_part2.last.drop(columns=user_input_part2.rem_col)
-    user_input_part2.last_val_dict= user_input_part2.last_val.reindex().to_dict('records')
-    user_input_part2.user_inp={}
-    pcv_u=float(data_json['PCV'])
-    Price_u=float(data_json['Price'])
-    user_input_part2.user_inp['PCV']=pcv_u
-    user_input_part2.user_inp['Price']=Price_u
     for i in range(len(channel_list)):
-        user_input_part2.user_inp[channel_list[i]]=float(data_json[channel_list[i]])
-    #keeping specified cols
+        user_inp[channel_list[i]]=float(data_json[channel_list[i]])
+    #keeping specified cols 
     
-    user_input_part2.test=user_inp_2_test(user_input_part2.user_inp,user_input_part2.last_val,channel_list,lr,decay,driver)
-    user_input_part2.pred=model.predict(user_input_part2.test)
-    user_input_part2.coeff_1=coeff123(data_promo1,hier,spc_hier,model)
-    coeff1=user_input_part2.coeff_1.copy()
+    #TEMPORARY SEASON IN DATA JSON -----------------------------------------
+    #=======================================================================
+    user_inp['season_0']=0
+    user_inp['season_1']=1
+    user_inp['season_2']=0
+    user_inp['season_3']=0
+    #======================================================================
+    #----------------------------------------------------------------------
+    user_inp=user_cor_adj(user_inp, added_col1,added_col2)
+    
+    test=user_inp_2_test(user_inp,last_val,chann_list,lr,decay,Model.driver1_sea) 
+    coeff_1=coeff123(data_promo1,hier,spc_hier,Model.mdf1_sea)
+    coeff1=coeff_1.copy() 
     coeff1.drop(columns=[hier],inplace=True)
     coeff1.reset_index(inplace=True,drop=True)
-    user_input_part2.test['Intercept']=1
-    #user_input_part2.test=user_input_part2.test.append([user_input_part2.test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
-    user_input_part2.test=user_input_part2.test[coeff1.columns]
+    test['Intercept']=1
+    #test=test.append([test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
+    test=test[coeff1.columns]
     #combining both list 
-    user_input_part2.result=dict(zip((user_input_part2.coeff_1[hier]),(coeff1*user_input_part2.test).sum(axis=1)))
-    #user_input_part2.last.Sales.values[0]=user_input_part2.last.Sales.values[0].to_dict('index')
-    #print('Last month sales: ',user_input_part2.last.Sales.values[0])
-    p_sales=p_chg_sales(user_input_part2.result.get(spc_hier),user_input_part2.last['Sales'+str('_log')].sum())
+    result=dict(zip((coeff_1[hier]),(coeff1*test).sum(axis=1)))
+    #last.Sales.values[0]=last.Sales.values[0].to_dict('index')
+    #print('Last month sales: ',last.Sales.values[0])
+    
+    #p_sales=p_chg_sales(result.get(spc_hier),last['Sales'+str('_log')].sum())
+    p_sales=p_chg_sales(result.get(spc_hier),last['Sales'].sum())
     #creating a json output
     #creating a dict for best possible value 
     
     #this dict contains all the imoprtant variables like channel_list and PCV and Price with their corresponding names of variables like ad_stock and log values
     one_one_dict={}
-    for i in range(len(channel_list)):
-        one_one_dict[channel_list[i]]=user_input_part2.coeff_1.columns[i]
-    one_one_dict['Price']='Price_log'
-    one_one_dict['PCV']='PCV_log'
+    for i in range(len(chann_list)):
+        one_one_dict[chann_list[i]]=coeff_1.columns[i]
+        one_one_dict['Price']='Price'
+        one_one_dict['PCV']='PCV'
+# =============================================================================
+#     one_one_dict['Price']='Price_log'
+#     one_one_dict['PCV']='PCV_log'
+# =============================================================================
     one_one_dict={y:x for x,y in one_one_dict.items()}
-    keep_col=list(set(data_promo1.columns)-set(user_input_part2.rem_col))
+    keep_col=list(set(data_promo1.columns)-set(rem_col))  
     
     last=data_promo1[keep_col].tail(len((data_promo1[hier]).unique()))
+    last =user_cor_adj(last,added_col1,added_col2)
     last=last[list(one_one_dict.values())]
     
-    user_input_part2.coeff_1_copy=user_input_part2.coeff_1[list(one_one_dict.keys())]
-    #FINDING THE BEST VALUESs
-    user_input_part2.best_values={}
+    coeff_1_copy=coeff_1[list(one_one_dict.keys())]
+    #FINDING THE BEST VALUES
+    best_values={}
     for key in one_one_dict:
-        if user_input_part2.coeff_1_copy[key][0]>=0:
-            user_input_part2.best_values[one_one_dict[key]]=last[one_one_dict[key]].max()
-        if user_input_part2.coeff_1_copy[key][0]<0:
-            user_input_part2.best_values[one_one_dict[key]]=last[one_one_dict[key]].min()
+        if coeff_1_copy[key][0]>=0:
+            best_values[one_one_dict[key]]=last[one_one_dict[key]].max()
+        if coeff_1_copy[key][0]<0:
+            best_values[one_one_dict[key]]=last[one_one_dict[key]].min()
     
     #SALES of recommended values
-    #THIS CHANGES IT TO ADSTOCK AND LOG TRANSFORMATION
-    user_input_part2.test1=user_inp_2_test(user_input_part2.best_values,user_input_part2.last_val,channel_list,lr,decay,driver)
-    user_input_part2.coeff_11=coeff123(data_promo1,hier,spc_hier,model)
-    
-    coeff11=user_input_part2.coeff_11.copy()
-    coeff11.drop(columns=[hier],inplace=True)
-    coeff11.reset_index(inplace=True,drop=True)
-    user_input_part2.test1['Intercept']=1 
-    user_input_part2.test2 = user_input_part2.test1.copy()
-    #user_input_part2.test=user_input_part2.test.append([user_input_part2.test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
-    user_input_part2.test1=user_input_part2.test1[coeff11.columns]
-        
+    #THIS CHANGES IT TO ADSTOCK AND LOG TRANSFORMATION 
+    test1=user_inp_2_test(best_values,last_val,chann_list,lr,decay,Model.driver1)
+
+    #TEMPORARY SEASON IN DATA JSON -----------------------------------------
+    #=======================================================================
+    test1['season_0']=0
+    test1['season_1']=1
+    test1['season_2']=0
+    test1['season_3']=0
+    #======================================================================
+    #----------------------------------------------------------------------
+    test1['Intercept']=1 
+    #test=test.append([test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
+    test1=test1[coeff1.columns]      
+    #test1.drop(columns=[hier])
     #combining both list with names and values
-    user_input_part2.result1=dict(zip((user_input_part2.coeff_11[hier]),(coeff11*user_input_part2.test1).sum(axis=1)))
-    p_sales_recom=p_chg_sales_recom(user_input_part2.result1.get(spc_hier),user_input_part2.last['Sales'+str('_log')].sum())
-    budget = float(data_json['budget'])
-    budget_params = pred_bugdet(budget,user_input_part2.best_values) 
-    rounding_off(p_sales)
-    rounding_off(user_input_part2.best_values)
+    result1=dict(zip((coeff_1[hier]),(coeff1*test1).sum(axis=1)))
+    #p_sales_recom=p_chg_sales_recom(result1.get(spc_hier),last['Sales'+str('_log')].sum())
+    p_sales_recom=p_chg_sales_recom(result1.get(spc_hier),last_val['Sales'].sum())
+    budget = float(data_json['Budget'])
+    budget_params = pred_bugdet(budget,best_values.copy()) 
+    rounding_off(p_sales) 
+    rounding_off(best_values)
     rounding_off(p_sales_recom)
-    print(rounding_off(user_input_part2.best_values))
+    print(rounding_off(best_values))
     
     #function for roi values with for loop in new channel_list 
     roi_dict={}
-    for channel in channel_list:
-        roi_dict[channel] = roi_var(user_input_part2.last_val,user_input_part2.test2,coeff11,hier,var,channel_list,lr,decay,driver) 
+    for channel in chann_list:
+        roi_dict[channel] = roi_var(last_val,test2,coeff1,hier,channel,chann_list,lr,decay,Model.driver1) 
         
-    
-    output2={'per_of_sales':rounding_off(p_sales),"recommendation":rounding_off(user_input_part2.best_values),"Recommendation_on_budget": rounding_off(budget_params),"recommended_sales":rounding_off(p_sales_recom), "ROI":rounding_off(roi_dict)}
+    output2={'per_of_sales':rounding_off(p_sales),"recommendation":rounding_off(best_values),"Recommendation_on_budget": rounding_off(budget_params),"recommended_sales":rounding_off(p_sales_recom), "ROI":rounding_off(roi_dict)}
     return output2 
     
     
