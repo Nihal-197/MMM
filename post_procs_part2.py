@@ -19,16 +19,17 @@ def col_drop(hier,hier_list):
 #====================================================
 #SAME ROI FOR THE COLUMNS MULTIPLIED (MAYBE)
 #====================================================
-def roi_var(last_val,user_input,coeff,hier,var,channel_list,lr,decay,driver):
-    last[var]= user_input[var]  # the change in a single var keeping rezt as constant 
+def roi_var(last,user_input,coeff_1,hier,spc_hier,var):
+    lol=last_val_roi.copy()
+    lol['ad_stock_nad_Digital'][lol.index[0]]= test['ad_stock_nad_Digital']  # the change in a single var keeping rezt as constant 
     #SWITCH ONE SPEND AND SHOW THE SALES AFTER MULTIPLICATION
     #aligning the columns for multiplication
-    last['Intercept']=1
-    last=last[coeff.columns]
-    result=dict(zip((coeff[hier]),(coeff*last).sum(axis=1)))
+    lol['Intercept']=1 
+    last_sales= lol['Sales'].sum() 
+    lol=lol[coeff_1.columns]
+    result=dict(zip((coeff_1[hier]),(coeff_1*lol).sum(axis=1)))
     test_sales= result.get(spc_hier) 
     #last_sales= last_inp['Sales'+str('_log')].sum()
-    last_sales= last_inp['Sales'].sum() 
     #roi=(np.exp(test_sales)-np.exp(last_sales))*100/np.exp(last_sales)
     roi=(test_sales-last_sales)*100/last_sales 
     return roi
@@ -274,12 +275,12 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,
     
     #LAST VALUE WITH ADSTOCK AND SALES VAR
     last_val_roi = data_promo1[[f'ad_stock_nad_{channel}' for channel in chann_list]+['Sales','PCV','Price']+[hier]+[f'season_{i}' for i in range(4)]]
-    last_val_roi = last_val_roi[last_val_roi[hier]==spc_hier].tail(1).drop(columns=[hier])
+    last_val_roi = last_val_roi[last_val_roi[hier]==spc_hier].tail(1)
     
     #function for roi values with for loop in new channel_list 
     roi_dict={}
     for channel in chann_list:
-        roi_dict[channel] = roi_var(last_val_roi.copy(),test1,coeff1,hier,channel,chann_list,lr,decay,Model.driver1_sea) 
+        roi_dict[channel] = roi_var(last_val_roi.copy(),test,coeff_1,hier,spc_hier,f'ad_stock_nad_{channel}',chann_list,lr,decay,Model.driver1_sea) 
         
     output2={'per_of_sales':rounding_off(p_sales),"recommendation":rounding_off(best_values),"Recommendation_on_budget": rounding_off(budget_params),"recommended_sales":rounding_off(p_sales_recom), "ROI":rounding_off(roi_dict)}
     return output2 
