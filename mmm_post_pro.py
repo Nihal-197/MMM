@@ -34,8 +34,12 @@ def vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user):
     return vol 
 
 #SINCE WE HAVE FEWER COLUMNS LEFT BECAUSE OF CORRELATION WE ShOW THE LEFT ONES AS COMBINATION 
-def vol_combo(added_col1,added_col2):
+    
+def vol_combo(added_col1,added_col2,chann_list):
     local_var  = {} 
+    left = list(set(chann_list)-set(added_col1+added_col2))
+    for i in left:
+        local_var[i]=str(i)
     for i in range(len(added_col1)):
         if added_col1[i] in local_var:
             if added_col2[i] in local_var:
@@ -47,9 +51,6 @@ def vol_combo(added_col1,added_col2):
             local_var[added_col1[i]] = str(added_col1[i])+str('*')+ str(added_col2[i])
     return local_var
 
-def rounding_off(data):
-    data={x:round(y,2) for x,y in data.items() if type(y) != str}
-    return data
 
 def rounding_off(data):
     data={x:round(y,2) for x,y in data.items() if ((type(y) == float) or (type(y) == np.float64) or (type(y)==int)) }
@@ -64,7 +65,7 @@ def coeff123(data_promo1,hier,spc_hier,Model):
     a['Intercept']=Model.fe_params[0]
     a=a.to_frame().transpose()
     return a   
-def user_input(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_india_promo,driver,data_json,chann_list):
+def user_input(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_india_promo,data_json,chann_list,added_col1,added_col2):
     date_promo=[]
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
         date_promo.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
@@ -76,21 +77,21 @@ def user_input(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_
     last_val=last.drop(columns=rem_col)
     last_val_dict= last_val.reindex().to_dict('records')
     
-    coeff_1=coeff123(data_promo1,hier,spc_hier,Model.mdf1_sea) 
+    coeff_1=coeff123(data_promo1,hier,spc_hier,model) 
     coeff_1_user=coeff_1.to_dict('records') 
     
     #CREATING A VOLUME DISTRIBUTION BAR CHART (CONTRIBUTION) 
-    vol_dist=vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user)
-    vol_local= vol_combo(added_col1,added_col2)
+    user_input.vol_dist=vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user)
+    user_input.vol_local= vol_combo(added_col1,added_col2,chann_list)
     for i in chann_list:
-        if (vol_local):
-            vol_dist[vol_local[i]]=vol_dist.pop(i)
+        if (user_input.vol_local):
+            user_input.vol_dist[user_input.vol_local[i]]=user_input.vol_dist.pop(i)
 # =============================================================================
 #     rounding_off(last_val_dict)
 #     rounding_off(coeff_1_user)
 # =============================================================================
         
-    output={'last_param':rounding_off(last_val_dict[0]),'coeff':rounding_off(coeff_1_user[0]),'Vol_distribution':rounding_off(vol_dist)}
+    output={'last_param':rounding_off(last_val_dict[0]),'coeff':rounding_off(coeff_1_user[0]),'Vol_distribution':rounding_off(user_input.vol_dist)}
 
     return output
     
