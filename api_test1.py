@@ -142,7 +142,8 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
         Model(MMM1.data_promo1,MMM1.hier,pre2.chan_list)
         print('Model trained')
         #========================USER_INPUT============================================
-        final_data1=user_input(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,pre2.channel_list,Model.mdf,pre2.lr,pre2.decay,config_All_india_promo,Model.driver,data_json)
+        final_data1=user_input(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,pre2.channel_list,Model.mdf1_sea,pre2.lr,pre2.decay,config_All_india_promo,Model.driver,data_json,pre2.chann_list,pre2.added_col1,pre2.added_col2)
+
         MMM1.channel_list= pre2.channel_list.copy()
         MMM1.lr= pre2.lr.copy()
         MMM1.decay = pre2.decay.copy()
