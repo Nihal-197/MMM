@@ -173,19 +173,6 @@ def create_cson(data_promo1,hier,spc_hier,date_promo,target_inp):
 
 def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,driver,data_json,mod):
     
-    #------------- DELETE THESE VARIABLES -------------------------
-    data_json={
-    "Digital": 0.036340515999999996*1.1,
-    "OOH": 0.004845402*1.1,
-    "Print": 0.063268643*1.1,
-    "Radio":0.002422701*1.1, 
-    "TV":0.15747557*1.1,
-    "PCV": 19.405712061209467, 
-    "Price": 0.7841174974565274,
-    "Budget" : 5
-    }#REMOVE SeASON FROM THIS DATA JSON
-    #--------------------------------------------------------------
-    
     date_promo=[] 
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
         date_promo.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
