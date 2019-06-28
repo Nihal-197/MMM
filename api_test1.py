@@ -15,17 +15,7 @@ warnings.filterwarnings('ignore')
 #==============================================================================
 #MMM
 def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_json):
-    
-    data_json={ 
-        "api_key":456,
-        "api_secret": 456,
-        "hier": "Brand",
-        "spc_hier": "COMPLAN",
-        "mod": "Zone", 
-        "zone": "SOUTH",
-        "region": "RURAL"
-        
-    }
+
     #==========================================================================
     #Raising error in the data provided itself
     #then checking for the columns in the pre_processing module
