@@ -15,7 +15,7 @@ warnings.filterwarnings('ignore')
 #==============================================================================
 #MMM
 def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_json):
-
+    
     #==========================================================================
     #Raising error in the data provided itself
     #then checking for the columns in the pre_processing module
@@ -94,6 +94,7 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
         print('Model trained')
         print(f'R-2 score :{Model.acc1}')
         print(f'R-2 score with seasons : {Model.acc2}')
+        
         #========================USER_INPUT============================================
         final_data1=user_input(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,pre1.channel_list,Model.mdf1_sea,pre1.lr,pre1.decay,config_All_india_promo,data_json,pre1.chann_list,pre1.added_col1,pre1.added_col2)
         MMM1.channel_list= pre1.channel_list.copy()
@@ -102,7 +103,11 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
         MMM1.mdf1= Model.mdf1
         MMM1.mdf1_sea= Model.mdf1_sea
         MMM1.driver1=Model.driver1
+        MMM1.driver1_sea=Model.driver1_sea
         MMM1.chann_list = pre1.chann_list
+        MMM1.added_col1 = pre1.added_col1
+        MMM1.added_col2 = pre1.added_col2
+
         return final_data1
     #==============================================================================
     if(MMM1.mod=='Allindia' or MMM1.mod=='allindia' or MMM1.mod=='All india' or MMM1.mod=='AllIndia' or MMM1.mod=='all india'):
@@ -111,7 +116,8 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
         #FILTERING ALL INDIA DATA 
         test_data_all=data_HFD[(data_HFD['Level']==MMM1.hier)&(data_HFD['Level_Geo']=='Country')] #changes made(changed from country == all india)
         #==========================================================================
-  # =============================================================================
+  
+    # =============================================================================
 #         #This filter is already provided with EQL            
 #         test_data_all=test_data_all[['Month', 'Sales Volume (Volume(LITRES))','WD PCV Handling%','Value Offtake(000 Rs)']+[MMM1.hier]]
 #         data_promo=data_promo[['Month']+[MMM1.hier]+channel_list]
@@ -119,7 +125,7 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
 # =============================================================================
 
         #=========================PREPROCESSING====================================
-        MMM1.data_promo1=pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,MMM1.hier,MMM1.spc_hier)
+        MMM1.data_promo1=pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,MMM1.hier,MMM1.spc_hier,0.95,0.9)
         #==========================================================================
         print('Pre processing done for AllIndia')
         
@@ -131,6 +137,7 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
         #=============================MODEL============================================
         Model(MMM1.data_promo1,MMM1.hier,pre2.chan_list)
         print('Model trained')
+        print(Model.driver1_sea)
         #========================USER_INPUT============================================
         final_data1=user_input(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,pre2.channel_list,Model.mdf1_sea,pre2.lr,pre2.decay,config_All_india_promo,Model.driver,data_json,pre2.chann_list,pre2.added_col1,pre2.added_col2)
 
@@ -142,11 +149,13 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
         MMM1.driver1=Model.driver1
         MMM1.driver1_sea=Model.driver1_sea
         MMM1.chann_list = pre2.chann_list
+        MMM1.added_col1 = pre2.added_col1
+        MMM1.added_col2 = pre2.added_col2
         return final_data1
         #Saving few variables 
     #==============================================================================
     #create a post_processing part 2 for taking next few inputs
-def final(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,driver,data_json,mod):
+def final(data_promo1,hier,spc_hier,added_col1,added_col2,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,data_json,mod):
     
     #function just for checking if it contains the values 
     check_input(data_json,['api_key','api_secret']+[i for i in channel_list]+['PCV','Price'])
@@ -154,6 +163,6 @@ def final(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_sea,driver1,
     #check if the PCV has value between  0-100 as its a percentage and the rest of the values cannot be negative
     non_neg_val(data_json,channel_list) 
     #data_promo1,hier,spc_hier,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,driver,data_json,mod
-    final_data2=user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,driver,data_json,mod)
+    final_data2=user_input_part2(data_promo1,hier,spc_hier,added_col1,added_col2,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,data_json,mod)
     return final_data2
     
