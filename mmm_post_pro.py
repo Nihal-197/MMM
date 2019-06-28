@@ -77,21 +77,21 @@ def user_input(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_
     last_val=last.drop(columns=rem_col)
     last_val_dict= last_val.reindex().to_dict('records')
     
-    coeff_1=coeff123(data_promo1,hier,spc_hier,model) 
+    coeff_1=coeff123(data_promo1,hier,spc_hier,Model.mdf1_sea) 
     coeff_1_user=coeff_1.to_dict('records') 
     
     #CREATING A VOLUME DISTRIBUTION BAR CHART (CONTRIBUTION) 
-    user_input.vol_dist=vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user)
-    user_input.vol_local= vol_combo(added_col1,added_col2,chann_list)
+    vol_dist=vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user)
+    vol_local= vol_combo(added_col1,added_col2,chann_list)
     for i in chann_list:
-        if (user_input.vol_local):
-            user_input.vol_dist[user_input.vol_local[i]]=user_input.vol_dist.pop(i)
+        if (vol_local):
+            vol_dist[vol_local[i]]=vol_dist.pop(i)
 # =============================================================================
 #     rounding_off(last_val_dict)
 #     rounding_off(coeff_1_user)
 # =============================================================================
         
-    output={'last_param':rounding_off(last_val_dict[0]),'coeff':rounding_off(coeff_1_user[0]),'Vol_distribution':rounding_off(user_input.vol_dist)}
+    output={'last_param':rounding_off(last_val_dict[0]),'coeff':rounding_off(coeff_1_user[0]),'Vol_distribution':rounding_off(vol_dist)}
 
     return output
     
