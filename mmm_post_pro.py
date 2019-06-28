@@ -65,7 +65,7 @@ def coeff123(data_promo1,hier,spc_hier,Model):
     a['Intercept']=Model.fe_params[0]
     a=a.to_frame().transpose()
     return a   
-def user_input(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_india_promo,data_json,chann_list,added_col1,added_col2):
+def user_input(data_promo1,hier,spc_hier,channel_list,mdf1_sea,lr,decay,config_All_india_promo,data_json,chann_list,added_col1,added_col2):
     date_promo=[]
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
         date_promo.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
@@ -77,7 +77,7 @@ def user_input(data_promo1,hier,spc_hier,channel_list,model,lr,decay,config_All_
     last_val=last.drop(columns=rem_col)
     last_val_dict= last_val.reindex().to_dict('records')
     
-    coeff_1=coeff123(data_promo1,hier,spc_hier,Model.mdf1_sea) 
+    coeff_1=coeff123(data_promo1,hier,spc_hier,mdf1_sea) 
     coeff_1_user=coeff_1.to_dict('records') 
     
     #CREATING A VOLUME DISTRIBUTION BAR CHART (CONTRIBUTION) 
