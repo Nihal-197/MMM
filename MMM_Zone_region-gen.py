@@ -142,15 +142,15 @@ def mmm_api():
 def mmm_api2(): 
     data_json_1 = request.data.decode("utf-8")
     data_json2=json.loads(data_json_1)
-    try:
-        data_final = final(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,MMM1.channel_list,MMM1.chann_list,MMM1.driver1,MMM1.driver1,MMM1.mdf1_sea,MMM1.lr,MMM1.decay,config_All_india_promo,MMM1.driver,data_json2,MMM1.mod)
+    try: 
+        data_final = final(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,MMM1.added_col1,MMM1.added_col2,MMM1.channel_list,MMM1.chann_list,MMM1.driver1_sea,MMM1.driver1,MMM1.mdf1_sea,MMM1.lr,MMM1.decay,config_All_india_promo,data_json2,MMM1.mod)
         return json_response({"status_code":"200","data":data_final, 'status_txt':'SUCCESS'},status=200)
         #return jsonify(data_final)
 
     except ValueError as e:
         return json_response({"status_code":"500", 'status_txt':' INTERNAL SERVER ERROR, '+str(e).upper()},status=500)
     except Exception as e:
-        return json_response({"status_code":"500", 'status_txt':' INTERNAL SERVER ERROR! '},status=500)
+        return json_response({"status_code":"500", 'status_txt':' INTERNAL SERVER ERROR! '+str(e)},status=500)
 
 
 if __name__ == '__main__':
