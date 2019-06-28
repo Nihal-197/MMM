@@ -171,7 +171,7 @@ def create_cson(data_promo1,hier,spc_hier,date_promo,target_inp):
         target_inp[last_sea[0]]=1
     return target_inp
 
-def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,driver,data_json,mod):
+def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,data_json,mod):
     
     date_promo=[] 
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
