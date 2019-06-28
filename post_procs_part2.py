@@ -171,7 +171,7 @@ def create_cson(data_promo1,hier,spc_hier,date_promo,target_inp):
         target_inp[last_sea[0]]=1
     return target_inp
 
-def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,decay,config_All_india_promo,driver,data_json,mod):
+def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,driver,data_json,mod):
     
     #------------- DELETE THESE VARIABLES -------------------------
     data_json={
@@ -208,8 +208,8 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,
     user_inp=user_cor_adj(user_inp, added_col1,added_col2)
     #user_inp_copy= user_inp.copy() 
     
-    test=user_inp_2_test(user_inp,last_val,chann_list,lr,decay,Model.driver1_sea) 
-    coeff_1=coeff123(data_promo1,hier,spc_hier,Model.mdf1_sea)
+    test=user_inp_2_test(user_inp,last_val,chann_list,lr,decay,driver1_sea) 
+    coeff_1=coeff123(data_promo1,hier,spc_hier,mdf1_sea)
     coeff1=coeff_1.copy() 
     coeff1.drop(columns=[hier],inplace=True)
     coeff1.reset_index(inplace=True,drop=True)
@@ -254,7 +254,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,
     
     #SALES of recommended values
     #THIS CHANGES IT TO ADSTOCK AND LOG TRANSFORMATION 
-    test1=user_inp_2_test(best_values,last_val,chann_list,lr,decay,Model.driver1)
+    test1=user_inp_2_test(best_values,last_val,chann_list,lr,decay,driver1)
 
     create_cson(data_promo1,hier,spc_hier,date_promo,test1)
 
