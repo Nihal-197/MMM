@@ -20,18 +20,18 @@ def col_drop(hier,hier_list):
 #SAME ROI FOR THE COLUMNS MULTIPLIED (MAYBE)
 #====================================================
 def roi_var(last,user_input,coeff_1,hier,spc_hier,var):
-    lol=last_val_roi.copy()
-    lol['ad_stock_nad_Digital'][lol.index[0]]= test['ad_stock_nad_Digital']  # the change in a single var keeping rezt as constant 
+    last[var][last.index[0]]= test[var]  # the change in a single var keeping rezt as constant 
     #SWITCH ONE SPEND AND SHOW THE SALES AFTER MULTIPLICATION
     #aligning the columns for multiplication
-    lol['Intercept']=1 
-    last_sales= lol['Sales'].sum() 
-    lol=lol[coeff_1.columns]
-    result=dict(zip((coeff_1[hier]),(coeff_1*lol).sum(axis=1)))
+    last['Intercept']=1 
+    last_sales= last['Sales'].sum() 
+    last=last[coeff_1.columns]
+    last=last.reset_index(drop=True)
+    result=dict(zip((coeff_1[hier]),(coeff_1.drop(columns=[hier])*last.drop(columns=[hier])).sum(axis=1)))
     test_sales= result.get(spc_hier) 
     #last_sales= last_inp['Sales'+str('_log')].sum()
     #roi=(np.exp(test_sales)-np.exp(last_sales))*100/np.exp(last_sales)
-    roi=(test_sales-last_sales)*100/last_sales 
+    roi=(test_sales-last_sales)*100/last_sales-100
     return roi
     
 def rounding_off(data):
@@ -175,13 +175,13 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,
     
     #------------- DELETE THESE VARIABLES -------------------------
     data_json={
-    "Digital": 0.4, 
-    "OOH": 0.3,
-    "Print": 0.3,
-    "Radio": 0.3, 
-    "TV": 1.2,
-    "PCV": 30, 
-    "Price": 0.5,
+    "Digital": 0.036340515999999996*1.1,
+    "OOH": 0.004845402*1.1,
+    "Print": 0.063268643*1.1,
+    "Radio":0.002422701*1.1, 
+    "TV":0.15747557*1.1,
+    "PCV": 19.405712061209467, 
+    "Price": 0.7841174974565274,
     "Budget" : 5
     }#REMOVE SeASON FROM THIS DATA JSON
     #--------------------------------------------------------------
@@ -279,8 +279,8 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,model,lr,
     
     #function for roi values with for loop in new channel_list 
     roi_dict={}
-    for channel in chann_list:
-        roi_dict[channel] = roi_var(last_val_roi.copy(),test,coeff_1,hier,spc_hier,f'ad_stock_nad_{channel}',chann_list,lr,decay,Model.driver1_sea) 
+    for channel in chann_list: 
+        roi_dict[channel] = roi_var(last_val_roi.copy(),test,coeff_1,hier,spc_hier,f'ad_stock_nad_{channel}') 
         
     output2={'per_of_sales':rounding_off(p_sales),"recommendation":rounding_off(best_values),"Recommendation_on_budget": rounding_off(budget_params),"recommended_sales":rounding_off(p_sales_recom), "ROI":rounding_off(roi_dict)}
     return output2 
