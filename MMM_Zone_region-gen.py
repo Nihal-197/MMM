@@ -44,8 +44,8 @@ data_promo.Subbrand.replace(to_replace={'BOOST HEALTH AND ENERGYÂ\xa0':'BOOST H
 """ 
 	Python MMM API
 	@API Version: 1.0.0
-	@Author: Noob
-	@Date: 05.06.2019
+	@Author: Nihal 
+	@Date: 28.06.2019
 """
 
 app = Flask(__name__)
@@ -102,24 +102,26 @@ def check_response(response):
 
 { 
     
+        "api_key":456,
+        "api_secret": 456,
         "hier": "Brand",
-        "spc_hier": "Boost",
+        "spc_hier": "COMPLAN",
         "mod": "Zone", 
-        "zone": "North",
-        "region": "Urban"
+        "zone": "SOUTH",
+        "region": "RURAL"
         
     }
 
 { 
     
-        "Digital": 0.4, 
-        "OOH": 0.3,
-        "Print": 0.3,
-        "Radio": 0.3, 
-        "TV": 1.2,
-        "PCV": 30, 
-        "Price": 0.5,
-        'Budget' : 5
+    "Digital": 0.036340515999999996*1.1,
+    "OOH": 0.004845402*1.1,
+    "Print": 0.063268643*1.1,
+    "Radio":0.002422701*1.1, 
+    "TV":0.15747557*1.1,
+    "PCV": 19.405712061209467, 
+    "Price": 0.7841174974565274,
+    "Budget" : 5
         
     }
 
@@ -135,13 +137,13 @@ def mmm_api():
     except ValueError as e:
         return json_response({"status_code":"500", 'status_txt':' INTERNAL SERVER ERROR, '+str(e).upper()},status=500)
     except Exception as e:
-        return json_response({"status_code":"500", 'status_txt':' INTERNAL SERVER ERROR! '},status=500)
+        return json_response({"status_code":"500", 'status_txt':' INTERNAL SERVER ERROR! '+str(e)},status=500)
 @app.route('/mixed_models/promotional_input/', methods=['POST'])
 def mmm_api2(): 
     data_json_1 = request.data.decode("utf-8")
     data_json2=json.loads(data_json_1)
     try:
-        data_final = final(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,MMM1.channel_list,MMM1.mdf,MMM1.lr,MMM1.decay,config_All_india_promo,MMM1.driver,data_json2)
+        data_final = final(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,MMM1.channel_list,MMM1.chann_list,MMM1.driver1,MMM1.driver1,MMM1.mdf1_sea,MMM1.lr,MMM1.decay,config_All_india_promo,MMM1.driver,data_json2,MMM1.mod)
         return json_response({"status_code":"200","data":data_final, 'status_txt':'SUCCESS'},status=200)
         #return jsonify(data_final)
 
