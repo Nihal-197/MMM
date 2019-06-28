@@ -3,9 +3,9 @@ from math import sqrt
 import statsmodels.formula.api as smf
 from sklearn.metrics import r2_score,mean_squared_error
 #===========================MODEL=============================
-def Model(data_promo1,hier,channel_list):
+def Model(data_promo1,hier,chann_list):
     non_promo_col=np.array(['Price','PCV'])
-    chann=np.array(channel_list)
+    chann=np.array(chann_list)
 # =============================================================================
 #     #Model 1 with nad curve and log log model 
 #     Model.driver1 = [str("ad_stock_nad_")+i for i in chann.astype('object')+ "_log"]+[j for j in non_promo_col.astype('object') + "_log"]
@@ -19,16 +19,25 @@ def Model(data_promo1,hier,channel_list):
     md1=smf.mixedlm('Sales' + eqn1,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1)
     Model.mdf1=md1.fit(method='lbfgs')
     #mdf= Model.mdf1
-    
-    #MODEL WITH SEASONALITY 
-    try :
-        Model.driver1_sea = [str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object')]+[str('season_')+str(i) for i in range(4)]
-        eqn1_sea=' ~ '+' + '.join([i for i in Model.driver1_sea])
-        md1_sea=smf.mixedlm('Sales' + eqn1_sea,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1_sea)
-        Model.mdf1_sea=md1_sea.fit()
-    except Exception as e:
-        raise Exception("Model with seasons failed to get trained due to "+str(e))
-    #mdf1_sea = Model.mdf1_sea 
+    print(Model.mdf1.summary())
+
+     #MODEL WITH SEASONALITY 
+    Model.driver1_sea = [str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object')]+[str('season_')+str(i) for i in range(4)]
+    eqn1_sea=' ~ '+' + '.join([i for i in Model.driver1_sea])
+    md1_sea=smf.mixedlm('Sales' + eqn1_sea,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1_sea)
+    Model.mdf1_sea=md1_sea.fit()
+    print(Model.mdf1_sea.summary())
+# =============================================================================
+#     #MODEL WITH SEASONALITY 
+#     try :
+#         Model.driver1_sea = [str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object')]+[str('season_')+str(i) for i in range(4)]
+#         eqn1_sea=' ~ '+' + '.join([i for i in Model.driver1_sea])
+#         md1_sea=smf.mixedlm('Sales' + eqn1_sea,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1_sea)
+#         Model.mdf1_sea=md1_sea.fit()
+#     except Exception as e:
+#         raise Exception("Model with seasons failed to get trained due to "+str(e))
+#     #mdf1_sea = Model.mdf1_sea 
+# =============================================================================
     
 # =============================================================================
 #     #Model 2 with S curve 
