@@ -20,7 +20,7 @@ def col_drop(hier,hier_list):
 #SAME ROI FOR THE COLUMNS MULTIPLIED (MAYBE)
 #====================================================
 def roi_var(last,user_input,coeff_1,hier,spc_hier,var):
-    last[var][last.index[0]]= test[var]  # the change in a single var keeping rezt as constant 
+    last[var][last.index[0]]= user_input[var]  # the change in a single var keeping rezt as constant 
     #SWITCH ONE SPEND AND SHOW THE SALES AFTER MULTIPLICATION
     #aligning the columns for multiplication
     last['Intercept']=1 
