@@ -17,7 +17,7 @@ def col_drop(hier,hier_list):
 #get those two dictionary make a function with var as a variable to apply for loop over this function and 
 #output should be the roi value and make a dictionary with roi values and integrate it with the final output.
 #====================================================
-#SAME ROI FOR THE COLUMNS MULTIPLIED (MAYBE)
+#SAME ROI FOR THE COLUMNS MULTIPLIED (MAYBE) 
 #====================================================
 def roi_var(last,user_input,coeff_1,hier,spc_hier,var):
     last[var][last.index[0]]= user_input[var]  # the change in a single var keeping rezt as constant 
@@ -25,7 +25,7 @@ def roi_var(last,user_input,coeff_1,hier,spc_hier,var):
     #aligning the columns for multiplication
     last['Intercept']=1 
     last_sales= last['Sales'].sum() 
-    last=last[coeff_1.columns]
+    last=last[coeff_1.columns]  
     last=last.reset_index(drop=True)
     result=dict(zip((coeff_1[hier]),(coeff_1.drop(columns=[hier])*last.drop(columns=[hier])).sum(axis=1)))
     test_sales= result.get(spc_hier) 
@@ -160,18 +160,27 @@ def create_cson(data_promo1,hier,spc_hier,date_promo,target_inp):
     #check the lasat season of the data_promo and if the last 3 values of that season are same 
     # then put next season
     last_sea = data_promo1[data_promo1[hier]==spc_hier].tail(1)[date_promo].values[0]
-    val= data_promo1[data_promo1[hier]==spc_hier][last_sea].tail(3).sum().astype('int')
-    sea = re.findall('\d',last_sea[0])
-    for i in range(4):
-        target_inp[f'season_{i}']=0
-    if val.values[0]==3: 
-        new_cson = (int(sea[0])+1)%4 #TO GET NEXT SEASON 
-        target_inp[f'season_{new_cson}']=1
-    else : 
-        target_inp[last_sea[0]]=1
+    #val= data_promo1[data_promo1[hier]==spc_hier][last_sea].tail(3).sum().astype('int') #CHANGE THE TAIL TO 3 FOR 4 SEASONS YW 
+    sea = re.findall('\d',last_sea[0]) #VALUE OF LAST SEASON ex. 0 or 1
+    for i in range(2):
+        target_inp[f'season_{i}']=0 #CHANGE ALL THE SEASONS TO 0 AT FIRST THEN MAKE THE NEXT SEASON 1
+        
+    new_cson = (int(sea[0])+1)%2 #TO GET NEXT SEASON 
+    target_inp[f'season_{new_cson}']=1
+    
+    # IF WE HAVE MORE THAN 2 SEASONS USE THIS CODE FOR GETTING NEXT SEASON WITHOUT ANY HASSLE YW
+# =============================================================================
+#     for i in range(4): #CHANGE THE RANGE TO 4 FOR 4S 
+#         target_inp[f'season_{i}']=0
+#     if val.values[0]==3: 
+#         new_cson = (int(sea[0])+1)%4 #TO GET NEXT SEASON 
+#         target_inp[f'season_{new_cson}']=1
+#     else : 
+#         target_inp[last_sea[0]]=1
+# =============================================================================
     return target_inp
 
-def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,data_json,mod):
+def user_input_part2(data_promo1,hier,spc_hier,added_col1,added_col2,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,data_json,mod):
     
     date_promo=[] 
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
@@ -179,7 +188,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_s
     
     last=data_promo1[data_promo1[hier]==spc_hier].tail(1)
     last =user_cor_adj(last,added_col1,added_col2)
-    rem_col=list(set(list(last.columns))-set([hier]+date_promo +['Sales', 'PCV', 'Price']+chann_list+ [str('season_')+str(i) for i in range(4)]))
+    rem_col=list(set(list(last.columns))-set([hier]+date_promo +['Sales', 'PCV', 'Price']+chann_list+ [str('season_')+str(i) for i in range(2)])) #CHANGE THE VALUE OF 2 TO 4 IN CASE OF 4 SEASONS
     
     last_val=last.drop(columns=rem_col)
     last_val_dict= last_val.reindex().to_dict('records')
@@ -200,7 +209,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_s
     coeff1=coeff_1.copy() 
     coeff1.drop(columns=[hier],inplace=True)
     coeff1.reset_index(inplace=True,drop=True)
-    test['Intercept']=1
+    test['Intercept']=1 
     #test=test.append([test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
     test=test[coeff1.columns]
     #combining both list 
@@ -261,7 +270,7 @@ def user_input_part2(data_promo1,hier,spc_hier,channel_list,chann_list,driver1_s
     print(rounding_off(best_values))
     
     #LAST VALUE WITH ADSTOCK AND SALES VAR
-    last_val_roi = data_promo1[[f'ad_stock_nad_{channel}' for channel in chann_list]+['Sales','PCV','Price']+[hier]+[f'season_{i}' for i in range(4)]]
+    last_val_roi = data_promo1[[f'ad_stock_nad_{channel}' for channel in chann_list]+['Sales','PCV','Price']+[hier]+[f'season_{i}' for i in range(2)]] #CHANGE THE VALUE OF 2 to 4 IN CASE OF 4 SEASONS 
     last_val_roi = last_val_roi[last_val_roi[hier]==spc_hier].tail(1)
     
     #function for roi values with for loop in new channel_list 
