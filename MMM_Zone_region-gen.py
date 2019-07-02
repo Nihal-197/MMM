@@ -43,7 +43,7 @@ data_promo.Subbrand.replace(to_replace={'BOOST HEALTH AND ENERGYÂ\xa0':'BOOST H
 
 """ 
 	Python MMM API
-	@API Version: 1.0.0
+	@API Version: 2.0.0
 	@Author: Nihal 
 	@Date: 28.06.2019
 """
@@ -68,31 +68,30 @@ def check_request():
 	except Exception as e:
 		return json_response({"status_code":"400", "status_txt":'BAD REQUEST ' + str(e.__class__.__name__)}, status=400)
 
-# =============================================================================
-# def get_data(eql_generated, api_key=None, api_secret=None, limit=None):
-#     """ Get the needed data from the API """
-#  
-#     data_payload = {
-#     'api_key': api_key,
-#     'api_secret': api_secret, 
-#     'data': {eql: eql_generated}
-#         }
-#  
-#     data_header = { 
-#     'content-type': 'application/json'
-#     }
-#     response = requests.request("POST", url=config.EQL_PROCESSOR_URL, json=data_payload, headers=data_header)
-#     data = response.json()
-#      
-#     if data['status_code'] != 200:
-#         raise ValueError(data["status_txt"])
-#     if not data['data']:
-#         raise ValueError(data["status_txt"])
-#     if 'status_code' in data['data']:
-#         raise ValueError(data['data']["status_txt"])
-#          
-#     return data
-# =============================================================================
+#TO GET THE DATA FROM THE EQL 
+def get_data(eql_generated, api_key=None, api_secret=None, limit=None):
+    """ Get the needed data from the API """
+ 
+    data_payload = {
+    'api_key': api_key,
+    'api_secret': api_secret, 
+    'data': {eql: eql_generated}
+        }
+ 
+    data_header = { 
+    'content-type': 'application/json'
+    }
+    response = requests.request("POST", url=config.EQL_PROCESSOR_URL, json=data_payload, headers=data_header)
+    data = response.json()
+     
+    if data['status_code'] != 200:
+        raise ValueError(data["status_txt"])
+    if not data['data']:
+        raise ValueError(data["status_txt"])
+    if 'status_code' in data['data']:
+        raise ValueError(data['data']["status_txt"])
+         
+    return data
 
 
 @app.after_request
