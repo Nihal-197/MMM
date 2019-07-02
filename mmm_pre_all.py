@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from corr_finder import *
+from corr_all_india import *
 #for brand drop subbrand, for manuf. drop band and subbrand 
 
 #==========================PRE_PROCESSING======================
@@ -112,8 +112,8 @@ def pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hi
     pre2.lr={}
     pre2.decay={}
     for i in range((config_All_india_promo[config_All_india_promo['derived_dimension']=='Learning Rates']['num_rav_var'].sum())):
-        pre2.lr[channel_list[i]]=config_All_india_promo[config_All_india_promo['derived_dimension']=='Learning Rates']['rv'+str(i+1)].sum()
-        pre2.decay[channel_list[i]]=config_All_india_promo[config_All_india_promo['derived_dimension']=='Decay Rates']['rv'+str(i+1)].sum()
+        pre2.lr[pre2.channel_list[i]]=config_All_india_promo[config_All_india_promo['derived_dimension']=='Learning Rates']['rv'+str(i+1)].sum()
+        pre2.decay[pre2.channel_list[i]]=config_All_india_promo[config_All_india_promo['derived_dimension']=='Decay Rates']['rv'+str(i+1)].sum()
 
     #treating outliers in the model removing the values over 99%
     filling_na(data_promo,pre2.hier_list[2:3][0],pre2.zone_reg_col,pre2.channel_list)
@@ -155,16 +155,14 @@ def pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hi
     #CHECK FOR CORRELATION AND RELATED CHANGES 
     
     #GET THE LIST OF COLUMNS TO TAKE CORRELATION MATRIX FOR 
+
     chann=np.array(pre2.channel_list)   
     non_promo_col=np.array(['Price','PCV'])
-# =============================================================================
-#     #driver_col=[str("ad_stock_nad_")+i for i in chann.astype('object')+ "_log"]+[j for j in non_promo_col.astype('object') + "_log"]
-#     driver_col=[str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object') ] 
-#     lis=driver_col+['Sales_log']
-# =============================================================================
+    driver_col=[str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object') ]
+    lis=driver_col+['Sales']
     
-    #CORRELATION MATRIX
-    corr= data_promo1[lis].corr()
+    #CORRELATION MATRIX 
+    corr= data_promo1[lis].corr() 
     
     #COrrelation for nad without log 
     driver_col_s=[str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object')]
@@ -176,13 +174,13 @@ def pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hi
     mapped=new_map_dict(corr_find.corr)
     pre2.added_col1=deque([]) 
     pre2.added_col2=deque([])
-    data_promo1,pre2.chann_list,pre2.added_col1,pre2.added_col2=corr_merge_all(pre2.added_col1,pre2.added_col2data_promo1,hier,spc_hier,pre2.channel_list,pre2.spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,pre2.lr,pre2.decay)
+    data_promo1,pre2.chann_list,pre2.added_col1,pre2.added_col2=corr_merge_all(pre2.added_col1,pre2.added_col2,data_promo1,hier,spc_hier,pre2.channel_list,pre2.spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,pre2.lr,pre2.decay)
     #we get return as df, new channel_list and the list of exchanges of columns in deque 
     
     #GET DUMMIES FOR SEASONALITY 
     data_promo1[pre2.date_promo[0]]=data_promo1[pre2.date_promo[0]].dt.month
     #CREATING 4 BINS 
-    data_promo1[pre2.date_promo[0]]=pd.cut(data_promo1[pre2.date_promo[0]],4,labels=[str('season_')+str(i) for i in range(4)])
+    data_promo1[pre2.date_promo[0]]=pd.cut(data_promo1[pre2.date_promo[0]],2,labels=[str('season_')+str(i) for i in range(2)])
     #CREATING DUMMY VARIABLES 
     daa=pd.get_dummies(data_promo1[pre2.date_promo[0]])
     #JOIN BOTH
