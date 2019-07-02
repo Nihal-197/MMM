@@ -62,10 +62,8 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
         MMM1.zone =data_json['zone'].capitalize()
         MMM1.region=data_json['region'].capitalize()
         
-# =============================================================================
-#         data_validator(data_promo,'Zone',MMM1.zone)
-#         data_validator(data_promo,'Region',MMM1.region)
-# =============================================================================
+        data_validator(data_promo,'Zone',MMM1.zone)
+        data_validator(data_promo,'Region',MMM1.region)
         
         #==========================================================================
         #FILTER FOR ZONAL DATA 
@@ -84,11 +82,6 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
         MMM1.data_promo1=pre1(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,MMM1.hier,MMM1.spc_hier,0.89,0.8)
         print('Pre processing done for Zone')
         
-        #==============================================================================
-        #correlation finder for 2 different curves 
-        #corr_fin(data_promo1,pre.channel_list)
-        #==============================================================================
-        
         #=============================MODEL============================================
         Model(MMM1.data_promo1,MMM1.hier,pre1.chann_list)
         print('Model trained')
@@ -96,7 +89,7 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
         print(f'R-2 score with seasons : {Model.acc2}')
         
         #========================USER_INPUT============================================
-        final_data1=user_input(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,pre1.channel_list,Model.mdf1_sea,pre1.lr,pre1.decay,config_All_india_promo,data_json,pre1.chann_list,pre1.added_col1,pre1.added_col2)
+        final_data1=user_input(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,pre1.channel_list,Model.mdf1_sea,Model.mdf1,pre1.lr,pre1.decay,config_All_india_promo,data_json,pre1.chann_list,pre1.added_col1,pre1.added_col2)
         MMM1.channel_list= pre1.channel_list.copy()
         MMM1.lr= pre1.lr.copy()
         MMM1.decay = pre1.decay.copy() 
@@ -125,21 +118,16 @@ def MMM1(data_HFD,data_promo,config_All_india_HFD,config_All_india_promo,data_js
 # =============================================================================
 
         #=========================PREPROCESSING====================================
-        MMM1.data_promo1=pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,MMM1.hier,MMM1.spc_hier,0.95,0.9)
+        MMM1.data_promo1=pre2(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,MMM1.hier,MMM1.spc_hier,0.99,0.9)
         #==========================================================================
         print('Pre processing done for AllIndia')
         
-        #==============================================================================
-        #correlation finder for 2 different curves 
-        #corr_fin(data_promo1,pre.channel_list)
-        #==============================================================================
-        
         #=============================MODEL============================================
-        Model(MMM1.data_promo1,MMM1.hier,pre2.chan_list)
+        Model(MMM1.data_promo1,MMM1.hier,pre2.chann_list)
         print('Model trained')
         print(Model.driver1_sea)
         #========================USER_INPUT============================================
-        final_data1=user_input(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,pre2.channel_list,Model.mdf1_sea,pre2.lr,pre2.decay,config_All_india_promo,Model.driver,data_json,pre2.chann_list,pre2.added_col1,pre2.added_col2)
+        final_data1=user_input(MMM1.data_promo1,MMM1.hier,MMM1.spc_hier,pre2.channel_list,Model.mdf1_sea,pre2.lr,pre2.decay,config_All_india_promo,data_json,pre2.chann_list,pre2.added_col1,pre2.added_col2)
 
         MMM1.channel_list= pre2.channel_list.copy()
         MMM1.lr= pre2.lr.copy()
@@ -162,7 +150,7 @@ def final(data_promo1,hier,spc_hier,added_col1,added_col2,channel_list,chann_lis
     
     #check if the PCV has value between  0-100 as its a percentage and the rest of the values cannot be negative
     non_neg_val(data_json,channel_list) 
-    #data_promo1,hier,spc_hier,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,driver,data_json,mod
+
     final_data2=user_input_part2(data_promo1,hier,spc_hier,added_col1,added_col2,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,data_json,mod)
     return final_data2
     
