@@ -47,7 +47,7 @@ def eql_generator_mmm_spends(data_json,config,db_type,query_type,type_):#datafra
     eql={}
     eql["date"]={get_line(config,"date_var")['rv1'].values[0]:{}}
     eql["db_type"]=db_type
-    eql["query_type"]=query_type
+    eql["query_type"]=query_type #find
     eql["type"]=type_
         #if condition for zone and region
     eql["measure"]={}
