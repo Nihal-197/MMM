@@ -26,12 +26,22 @@ def vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user):
     vol= {} 
     for i in chann_list:
         vol[i]= (data_promo1[data_promo1[hier]==spc_hier][str('ad_stock_nad_')+str(i)].sum())*coeff_1_user[0][str('ad_stock_nad_')+str(i)]/t_sales
-    for j in range(4): 
+    for j in range(2): #CHANGE THE VALUE OF 2 TO 4 IN CASE OF 4 SEASONS 
         vol[str('season_')+str(j)]=(data_promo1[data_promo1[hier]==spc_hier][str('season_')+str(j)].sum())*coeff_1_user[0][str('season_')+str(j)]/t_sales
     vol['Price']=(data_promo1[data_promo1[hier]==spc_hier]['Price'].sum())*coeff_1_user[0]['Price']/t_sales
     vol['PCV']=(data_promo1[data_promo1[hier]==spc_hier]['PCV'].sum())*coeff_1_user[0]['PCV']/t_sales
     vol['Base_sales']= len(data_promo1[data_promo1[hier]==spc_hier]['PCV'])*coeff_1_user[0]['Intercept']/t_sales
     return vol 
+
+def vol_distr_no_sea(data_promo1,hier,spc_hier,chann_list,coeff_1_user):
+    t_sales= data_promo1[data_promo1[hier]==spc_hier]['Sales'].sum()
+    vol= {} 
+    for i in chann_list:
+        vol[i]= (data_promo1[data_promo1[hier]==spc_hier][str('ad_stock_nad_')+str(i)].sum())*coeff_1_user[0][str('ad_stock_nad_')+str(i)]/t_sales
+    vol['Price']=(data_promo1[data_promo1[hier]==spc_hier]['Price'].sum())*coeff_1_user[0]['Price']/t_sales
+    vol['PCV']=(data_promo1[data_promo1[hier]==spc_hier]['PCV'].sum())*coeff_1_user[0]['PCV']/t_sales
+    vol['Base_sales']= len(data_promo1[data_promo1[hier]==spc_hier]['PCV'])*coeff_1_user[0]['Intercept']/t_sales
+    return vol
 
 #SINCE WE HAVE FEWER COLUMNS LEFT BECAUSE OF CORRELATION WE ShOW THE LEFT ONES AS COMBINATION 
     
@@ -65,20 +75,22 @@ def coeff123(data_promo1,hier,spc_hier,Model):
     a['Intercept']=Model.fe_params[0]
     a=a.to_frame().transpose()
     return a   
-def user_input(data_promo1,hier,spc_hier,channel_list,mdf1_sea,lr,decay,config_All_india_promo,data_json,chann_list,added_col1,added_col2):
+def user_input(data_promo1,hier,spc_hier,channel_list,mdf1_sea,mdf1,lr,decay,config_All_india_promo,data_json,chann_list,added_col1,added_col2):
     date_promo=[]
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
         date_promo.append(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['rv'+str(i+1)].values[0])
     
     last=data_promo1[data_promo1[hier]==spc_hier].tail(1)
     #Chann list contain original channel_list no the revised one 
-    rem_col=list(set(list(last.columns))-set([hier]+date_promo +['Sales', 'PCV', 'Price']+chann_list+[str('season_')+str(i) for i in range(4)]))
+    rem_col=list(set(list(last.columns))-set([hier]+date_promo +['Sales', 'PCV', 'Price']+chann_list+[str('season_')+str(i) for i in range(2)])) #CHANGE THE VALUE OF 2 TO 4 IN CASE OF 4 SEASONS 
     
     last_val=last.drop(columns=rem_col)
     last_val_dict= last_val.reindex().to_dict('records')
     
-    coeff_1=coeff123(data_promo1,hier,spc_hier,mdf1_sea) 
+    coeff_1=coeff123(data_promo1,hier,spc_hier,mdf1_sea)  #oefficients with seasons
     coeff_1_user=coeff_1.to_dict('records') 
+    coeff_1_no_sea=coeff123(data_promo1,hier,spc_hier,mdf1) #coefficients without  seasons
+    coeff_1_user_no_sea=coeff_1_no_sea.to_dict('records') 
     
     #CREATING A VOLUME DISTRIBUTION BAR CHART (CONTRIBUTION) 
     vol_dist=vol_distr(data_promo1,hier,spc_hier,chann_list,coeff_1_user)
@@ -86,12 +98,16 @@ def user_input(data_promo1,hier,spc_hier,channel_list,mdf1_sea,lr,decay,config_A
     for i in chann_list:
         if (vol_local):
             vol_dist[vol_local[i]]=vol_dist.pop(i)
+    vol_dist_no_sea=vol_distr_no_sea(data_promo1,hier,spc_hier,chann_list,coeff_1_user_no_sea)
+    for i in chann_list:
+        if (vol_local):
+            vol_distvol_dist_no_sea[vol_local[i]]=vol_dist_no_sea.pop(i)
 # =============================================================================
 #     rounding_off(last_val_dict)
 #     rounding_off(coeff_1_user)
 # =============================================================================
         
-    output={'last_param':rounding_off(last_val_dict[0]),'coeff':rounding_off(coeff_1_user[0]),'Vol_distribution':rounding_off(vol_dist)}
+    output={'last_param':rounding_off(last_val_dict[0]),'coeff':rounding_off(coeff_1_user[0]),'Vol_distribution':rounding_off(vol_dist),'Vol_distribution_no_sea':rounding_off(vol_dist_no_sea)}
 
     return output
     
