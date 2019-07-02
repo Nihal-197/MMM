@@ -49,7 +49,7 @@ def vol_combo(added_col1,added_col2,chann_list):
     local_var  = {} 
     left = list(set(chann_list)-set(added_col1+added_col2))
     for i in left:
-        local_var[i]=str(i)
+        local_var[i]=str(i) #FOR ELEMENTS THOSE HAD CORRELATION LESS THAN 0.8 THEY ARE USED AS IT AS
     for i in range(len(added_col1)):
         if added_col1[i] in local_var:
             if added_col2[i] in local_var:
@@ -57,10 +57,11 @@ def vol_combo(added_col1,added_col2,chann_list):
                 local_var.pop(added_col2[i])
             else :
                 local_var[added_col1[i]] = str(local_var[added_col1[i]]) + str('*') + str(added_col2[i])
+        elif added_col2[i] in local_var:
+            local_var[added_col1[i]] = str(added_col1[i])+str('*')+ str(local_var[added_col2[i]])
         else :
             local_var[added_col1[i]] = str(added_col1[i])+str('*')+ str(added_col2[i])
     return local_var
-
 
 def rounding_off(data):
     data={x:round(y,2) for x,y in data.items() if ((type(y) == float) or (type(y) == np.float64) or (type(y)==int)) }
