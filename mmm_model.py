@@ -21,23 +21,19 @@ def Model(data_promo1,hier,chann_list):
     #mdf= Model.mdf1
     print(Model.mdf1.summary())
 
-     #MODEL WITH SEASONALITY 
-    Model.driver1_sea = [str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object')]+[str('season_')+str(i) for i in range(4)]
-    eqn1_sea=' ~ '+' + '.join([i for i in Model.driver1_sea])
-    md1_sea=smf.mixedlm('Sales' + eqn1_sea,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1_sea)
-    Model.mdf1_sea=md1_sea.fit()
-    print(Model.mdf1_sea.summary())
-# =============================================================================
-#     #MODEL WITH SEASONALITY 
-#     try :
-#         Model.driver1_sea = [str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object')]+[str('season_')+str(i) for i in range(4)]
-#         eqn1_sea=' ~ '+' + '.join([i for i in Model.driver1_sea])
-#         md1_sea=smf.mixedlm('Sales' + eqn1_sea,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1_sea)
-#         Model.mdf1_sea=md1_sea.fit()
-#     except Exception as e:
-#         raise Exception("Model with seasons failed to get trained due to "+str(e))
-#     #mdf1_sea = Model.mdf1_sea 
-# =============================================================================
+    #MODEL WITH SEASONALITY 
+    try :
+        Model.driver1_sea = [str("ad_stock_nad_")+i for i in chann.astype('object')]+[j for j in non_promo_col.astype('object')]+[str('season_')+str(i) for i in range(2)] #CHANGE THE VALUE OF 2 TO 4 IN CASE OF 4 SEASONS 
+        eqn1_sea=' ~ '+' + '.join([i for i in Model.driver1_sea])
+        md1_sea=smf.mixedlm('Sales' + eqn1_sea,data = data_promo1,groups=data_promo1[hier],re_formula=eqn1_sea)
+        #PENALISE THE MODEL IF THE MODEL GIVES SINGULAR MATRIX
+    
+        #md1_sea.fit_regularized(alpha=1) 
+        Model.mdf1_sea=md1_sea.fit()
+        print(Model.mdf1_sea.summary())
+    except Exception as e:
+        raise Exception("Model with seasons failed to get trained due to "+str(e))
+    #mdf1_sea = Model.mdf1_sea 
     
 # =============================================================================
 #     #Model 2 with S curve 
@@ -49,9 +45,10 @@ def Model(data_promo1,hier,chann_list):
     
     Model.acc1 = r2_score(data_promo1['Sales'],Model.mdf1.fittedvalues)
     Model.acc2 = r2_score(data_promo1['Sales'],Model.mdf1_sea.fittedvalues)
-
+    r2_2= r2_score(data_promo1['Sales'],Model.mdf1_sea.fittedvalues)
+    adj_r = 1-((1-r2_2)*(len(data_promo1)-1)/(len(data_promo1)-1-8))
 # =============================================================================
-#     
+#     IN CASE OF CHOOSING A MODEL WITH BEST ACCURACY
 #     acc1 = r2_score(data_promo1['Sales'],Model.mdf1.fittedvalues)
 #     acc1 = r2_score(data_promo1['Sales_log'],Model.mdf1_sea.fittedvalues)
 #     #if time (choose the best model)
@@ -65,5 +62,4 @@ def Model(data_promo1,hier,chann_list):
 # =============================================================================
 
 #==================================================================
-    
-#Model(data_promo1,hier,chann_list)
+
