@@ -4,6 +4,27 @@ from collections import deque
 from mmm_pre_zone import *
 from mmm_pre_all import *
 
+#ALL INDIA LEVEL ADSTOCK
+def ad_stock_s_curve_u_all(data,var,hier,spc_hier,lr_list,decay_list):
+    ad_stock_list=[]
+    ad_stock_list2=[]
+    
+    lr_rate=float((lr_list[var]))
+    decay=float(decay_list[var])
+    
+    ad_stock_value=0
+    ad_stock_value2=0
+    
+    for index,row in data[data[hier]==spc_hier].iterrows():
+        t=row[str(var)]
+        #print(row['month'],row['Brand'],var)
+        ad_stock_value=(1/(1+np.exp(-lr_rate*t)))+ad_stock_value*decay
+        ad_stock_value2=1- np.exp(-lr_rate*t)+ad_stock_value2*decay
+        ad_stock_list.append(ad_stock_value)
+        ad_stock_list2.append(ad_stock_value2)
+        data.loc[index,'ad_stock_s_'+str(var)] =ad_stock_value
+        data.loc[index,'ad_stock_nad_'+str(var)] =ad_stock_value2
+        
 #function to make the dict with the channel_values 
 def str_fin_ad_log(string):
     if bool(re.search('ad_stock_nad_(\w+)_log',string)):
@@ -28,7 +49,6 @@ def new_map_dict(corr):
 
 #CREATE A FUCNTION BY TAKING THE VALUES OF THE DICT RETURN BY THE CORRELATION AND ADD THOSE PURE VALUES, 
 #LATER TRNASFORM THEM AND REPEAT UNTIL WE FIND NO CORRELATION
-
 
 def corr_find(data_promo1,channel_list,cor_coef_ad,cor_coef_else):
     non_promo_col=np.array(['Price','PCV'])
@@ -61,10 +81,9 @@ def corr_find(data_promo1,channel_list,cor_coef_ad,cor_coef_else):
 #CHANNEL_LIST IS SUBJECTED TO CHANGE 
 #CHANGE lr to lr_list and same for decay
 
-added_col1=deque([]) 
-added_col2=deque([])
 
-def corr_merge(data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay):
+
+def corr_merge_zone(added_col1,added_col2,data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay):
     
     if cor1_dict: 
         #print(cor1_dict)
@@ -85,15 +104,15 @@ def corr_merge(data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,sp
 # =============================================================================
         cor1_dict.pop(list(cor1_dict.keys())[0]) 
         channel_list = list(set(channel_list)- set([item_2]))
-        print(item_2)
+        print(item_2) 
         print(channel_list)
         cor1_dict = corr_find(data_promo1,channel_list,cor_coef_ad,cor_coef_else)
         print('CORRRELATION DICT',cor1_dict)
-        return corr_merge(data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay)
+        return corr_merge_zone(added_col1,added_col2,data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay)
     else : 
         return data_promo1,channel_list,added_col1,added_col2
 
-def corr_merge_all(data_promo1,hier,spc_hier,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay):
+def corr_merge_all(added_col1,added_col2,data_promo1,hier,spc_hier,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay):
     
     if cor1_dict: 
         #print(cor1_dict)
@@ -107,7 +126,7 @@ def corr_merge_all(data_promo1,hier,spc_hier,channel_list,spc_hier_list,mapped,c
 
         #print(item_1)  data,data_promo,var,hier,spc_hier,zone_reg_col,lr_list,decay_list 
         for j in spc_hier_list: 
-            ad_stock_s_curve_u(data_promo1,item_1,hier,j,lr,decay)
+            ad_stock_s_curve_u_all(data_promo1,item_1,hier,j,lr,decay)
 # =============================================================================
 #             log_var_crores(data_promo1,str('ad_stock_nad_')+item_1)
 #             log_var_crores(data_promo1,str('ad_stock_s_')+item_1)
@@ -118,10 +137,9 @@ def corr_merge_all(data_promo1,hier,spc_hier,channel_list,spc_hier_list,mapped,c
         print(channel_list)
         cor1_dict = corr_find(data_promo1,channel_list,cor_coef_ad,cor_coef_else)
         print('CORRRELATION DICT',cor1_dict)
-        return corr_merge(data_promo1,hier,spc_hier,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay)
+        return corr_merge_all(added_col1,added_col2,data_promo1,hier,spc_hier,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay)
     else : 
         return data_promo1,channel_list,added_col1,added_col2
-    
     
 #For making similar changes in the user input as we did in correlation df 
 def post_col_chg(user_input,added_col1,added_col2):
@@ -136,7 +154,79 @@ def post_col_chg(user_input,added_col1,added_col2):
     else:
         return user_input
         
+def ad_stock_s_curve_u(data,data_promo,var,hier,spc_hier,zone_reg_col,lr_list,decay_list):
+    n=len(zone_reg_col) #NUMBER OF DIFFERENT POSSIBLE ZONE/REGIONS/ANYTHING UPTO 5
     
+    lr_rate=float((lr_list[var]))
+    decay=float(decay_list[var]) 
+
+    if n==2:
+        a=[]
+        for an in range(n):
+            a.append(list(data_promo[zone_reg_col[an]].unique()))
+        #a[0] CONTAINS VALUES LIKE ['North','East','West','South']
+        for (x,y) in list(itertools.product(*[a[l] for l in range(n)])):
+            ad_stock_value=0
+            ad_stock_value2=0
+            for index,row in data[(data[hier]==spc_hier) & (data[zone_reg_col[0]]==x)&(data[zone_reg_col[1]]==y)].iterrows():
+                t=row[str(var)]
+                ad_stock_value=(1/(1+np.exp(-lr_rate*t)))+ad_stock_value*decay
+                ad_stock_value2=1- np.exp(-lr_rate*t)+ad_stock_value2*decay
+                data.loc[index,'ad_stock_s_'+str(var)] =ad_stock_value
+                data.loc[index,'ad_stock_nad_'+str(var)] =ad_stock_value2
+
+    elif n==3:
+        a=[]
+        for an in range(n):
+            a.append(list(data_promo[zone_reg_col[an]].unique()))
+        for (x,y,z) in list(itertools.product(*[a[l] for l in range(n)])):
+            ad_stock_value=0
+            ad_stock_value2=0
+            for index,row in data[(data[hier]==spc_hier) & (data[zone_reg_col[0]]==x)&(data[zone_reg_col[1]]==y) &(data[zone_reg_col[2]]==z) ].iterrows():
+                t=row[str(var)]
+                ad_stock_value=(1/(1+np.exp(-lr_rate*t)))+ad_stock_value*decay
+                ad_stock_value2=1- np.exp(-lr_rate*t)+ad_stock_value2*decay
+# =============================================================================
+#                 ad_stock_list.append(ad_stock_value)
+#                 ad_stock_list2.append(ad_stock_value2)
+# =============================================================================
+                data.loc[index,'ad_stock_s_'+str(var)] =ad_stock_value
+                data.loc[index,'ad_stock_nad_'+str(var)] =ad_stock_value2
+    
+ 
+    elif n==4:
+        a=[]
+        for an in range(n):
+            a.append(list(data_promo[zone_reg_col[an]].unique()))
+        for (x,y,z,w) in list(itertools.product(*[a[l] for l in range(n)])):
+            ad_stock_value=0
+            ad_stock_value2=0
+            for index,row in data[(data[hier]==spc_hier) & (data[zone_reg_col[0]]==x)&(data[zone_reg_col[1]]==y) &(data[zone_reg_col[2]]==z)&(data[zone_reg_col[3]]==w) ].iterrows():
+                t=row[str(var)]
+                ad_stock_value=(1/(1+np.exp(-lr_rate*t)))+ad_stock_value*decay
+                ad_stock_value2=1- np.exp(-lr_rate*t)+ad_stock_value2*decay
+# =============================================================================
+#                 ad_stock_list.append(ad_stock_value)
+#                 ad_stock_list2.append(ad_stock_value2)
+# =============================================================================
+                data.loc[index,'ad_stock_s_'+str(var)] =ad_stock_value
+                data.loc[index,'ad_stock_nad_'+str(var)] =ad_stock_value2
+
+    elif n==5:
+        a=[]
+        for an in range(n):
+            a.append(list(data_promo[zone_reg_col[an]].unique()))
+        for (x,y,z,w,u) in list(itertools.product(*[a[l] for l in range(n)])):
+            ad_stock_value=0
+            ad_stock_value2=0
+            for index,row in data[(data[hier]==spc_hier) & (data[zone_reg_col[0]]==x)&(data[zone_reg_col[1]]==y) &(data[zone_reg_col[2]]==z)&(data[zone_reg_col[3]]==w)&(data[zone_reg_col[4]]==u) ].iterrows():
+                t=row[str(var)]
+                ad_stock_value=(1/(1+np.exp(-lr_rate*t)))+ad_stock_value*decay
+                ad_stock_value2=1- np.exp(-lr_rate*t)+ad_stock_value2*decay
+                ad_stock_list.append(ad_stock_value)
+                ad_stock_list2.append(ad_stock_value2)
+                data.loc[index,'ad_stock_s_'+str(var)] =ad_stock_value
+                data.loc[index,'ad_stock_nad_'+str(var)] =ad_stock_value2    
 # =============================================================================
 # 
 # def corr_fin(data_promo1,channel_list,spc_hier):
