@@ -35,3 +35,4 @@
 - ##### A recommendation based on the coefficients(derived from the fixed and random effects) for all the parameteres provided.
 - Recommended Sales or value of target variable.
 - Based on the provided Budget the optimized parameters for max sales.
+- ROI of the spends(promotional variables) left after correlation test.
