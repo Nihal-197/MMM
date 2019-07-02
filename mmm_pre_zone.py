@@ -132,10 +132,12 @@ def filling_na(data,hier,zone_list,channel_list):
 def pre1(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hier,spc_hier,cor_coef_ad=0.7,cor_coef_else=0.8):
 #for brand drop subbrand, for manuf. drop band and subbrand 
 # =============================================================================
+# =============================================================================
 #     hier=MMM1.hier
 #     spc_hier= MMM1.spc_hier
 #     cor_coef_ad=0.89
 #     cor_coef_else=0.8
+# =============================================================================
 #     #===============================DELETEEEEEE==============
     hier_list = []
     for i in range(config_All_india_HFD[config_All_india_HFD['derived_dimension']=='target_dim']['num_rav_var'].sum()):
@@ -230,13 +232,13 @@ def pre1(test_data_all,data_promo,config_All_india_HFD,config_All_india_promo,hi
     mapped=new_map_dict(corr_find.corr) 
     pre1.added_col1=deque([]) 
     pre1.added_col2=deque([])
-    data_promo1,pre1.chann_list,pre1.added_col1,pre1.added_col2=corr_merge_zone(pre1.added_col1,pre1.added_col2,data_promo,data_promo1,hier,spc_hier,zone_reg_col,channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,lr,decay)
+    data_promo1,pre1.chann_list,pre1.added_col1,pre1.added_col2=corr_merge_zone(pre1.added_col1,pre1.added_col2,data_promo,data_promo1,hier,spc_hier,zone_reg_col,pre1.channel_list,spc_hier_list,mapped,cor1_dict,cor_coef_ad,cor_coef_else,pre1.lr,pre1.decay)
     #we get return as df, new channel_list and the list of exchanges of columns in deque
     
     #GET DUMMIES FOR SEASONALITY 
     data_promo1[date_promo[0]]=data_promo1[date_promo[0]].dt.month
     #CREATING 4 BINS 
-    data_promo1[date_promo[0]]=pd.cut(data_promo1[date_promo[0]],4,labels=[str('season_')+str(i) for i in range(4)])
+    data_promo1[date_promo[0]]=pd.cut(data_promo1[date_promo[0]],2,labels=[str('season_')+str(i) for i in range(2)]) #ChANGE THE VALUE OF 2 to 4 FOR 4 SeASONS
     #CREATING DUMMY VARIABLES 
     daa=pd.get_dummies(data_promo1[date_promo[0]])
     #JOIN BOTH
