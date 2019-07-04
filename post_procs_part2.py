@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import json
 import re
+from mmm_post_pro import *
 #======================POST_PROCESSSING============================w
 #Now some values can contain 0 values for log function hence finding index of them and replacing them with the second
 #min value
@@ -19,21 +20,15 @@ def col_drop(hier,hier_list):
 #====================================================
 #SAME ROI FOR THE COLUMNS MULTIPLIED (MAYBE) 
 #====================================================
-def roi_var(last,user_input,coeff_1,hier,spc_hier,var):
-    last[var][last.index[0]]= user_input[var]  # the change in a single var keeping rezt as constant 
-    #SWITCH ONE SPEND AND SHOW THE SALES AFTER MULTIPLICATION
-    #aligning the columns for multiplication
-    last['Intercept']=1 
-    last_sales= last['Sales'].sum() 
-    last=last[coeff_1.columns]  
-    last=last.reset_index(drop=True)
-    result=dict(zip((coeff_1[hier]),(coeff_1.drop(columns=[hier])*last.drop(columns=[hier])).sum(axis=1)))
-    test_sales= result.get(spc_hier) 
-    #last_sales= last_inp['Sales'+str('_log')].sum()
-    #roi=(np.exp(test_sales)-np.exp(last_sales))*100/np.exp(last_sales)
-    roi=(test_sales-last_sales)*100/last_sales-100
+
+def roi_var_type(last,user_input,vol_dist_sam,hier,spc_hier,var):
+    last_var_inp = last[f'ad_stock_nad_{var}'][last.index[0]]
+    last[f'ad_stock_nad_{var}'][last.index[0]]= user_input[f'ad_stock_nad_{var}']  # the change in a single var keeping rezt as constant 
+    last_sales= last['Sales'].sum()*(last['Price'].sum() ) 
+    roi=(last_sales*vol_dist_sam[var]-last_var_inp.sum())/100/(last_var_inp.sum()) #DIVIDED BY 100 BECAUSE WE HAD DATA IN CRORES AND THIS IS PERCENT
+    #SO  WE ARE LEFT WITH 5 ZEROES NOW THE PRICE IS ACTUALLY IN 000 SO THREE MORE DOWN THERE- FINALLY WE ARE LEFT WITH 2 ZEROES 
     return roi
-    
+
 def rounding_off(data):
     data={x:round(y,2) for x,y in data.items() }
     return data
@@ -154,33 +149,52 @@ def user_cor_adj(user_inp,added_col1, added_col2):
         user_inp[added_col1[i]] = user_inp[added_col1[i]]+user_inp[added_col2[i]]
         user_inp.pop(added_col2[i])
     return user_inp
-
+   
+def vol_combo(added_col1,added_col2,chann_list):
+    local_var  = {} 
+    left = list(set(chann_list)-set(added_col1+added_col2))
+    for i in left:
+        local_var[i]=str(i) #FOR ELEMENTS THOSE HAD CORRELATION LESS THAN 0.8 THEY ARE USED AS IT AS
+    for i in range(len(added_col1)):
+        if added_col1[i] in local_var:
+            if added_col2[i] in local_var:
+                local_var[added_col1[i]] = str(local_var[added_col1[i]]) + str('*') + str(local_var[added_col2[i]])
+                local_var.pop(added_col2[i])
+            else :
+                local_var[added_col1[i]] = str(local_var[added_col1[i]]) + str('*') + str(added_col2[i])
+        elif added_col2[i] in local_var:
+            local_var[added_col1[i]] = str(added_col1[i])+str('*')+ str(local_var[added_col2[i]])
+        else :
+            local_var[added_col1[i]] = str(added_col1[i])+str('*')+ str(added_col2[i])
+    return local_var
 #TO ADDED SEASONS IN OUR USER'S INPUTS 
-def create_cson(data_promo1,hier,spc_hier,date_promo,target_inp):
-    #check the lasat season of the data_promo and if the last 3 values of that season are same 
-    # then put next season
-    last_sea = data_promo1[data_promo1[hier]==spc_hier].tail(1)[date_promo].values[0]
-    #val= data_promo1[data_promo1[hier]==spc_hier][last_sea].tail(3).sum().astype('int') #CHANGE THE TAIL TO 3 FOR 4 SEASONS YW 
-    sea = re.findall('\d',last_sea[0]) #VALUE OF LAST SEASON ex. 0 or 1
-    for i in range(2):
-        target_inp[f'season_{i}']=0 #CHANGE ALL THE SEASONS TO 0 AT FIRST THEN MAKE THE NEXT SEASON 1
-        
-    new_cson = (int(sea[0])+1)%2 #TO GET NEXT SEASON 
-    target_inp[f'season_{new_cson}']=1
-    
-    # IF WE HAVE MORE THAN 2 SEASONS USE THIS CODE FOR GETTING NEXT SEASON WITHOUT ANY HASSLE YW
 # =============================================================================
-#     for i in range(4): #CHANGE THE RANGE TO 4 FOR 4S 
-#         target_inp[f'season_{i}']=0
-#     if val.values[0]==3: 
-#         new_cson = (int(sea[0])+1)%4 #TO GET NEXT SEASON 
-#         target_inp[f'season_{new_cson}']=1
-#     else : 
-#         target_inp[last_sea[0]]=1
+# def create_cson(data_promo1,hier,spc_hier,date_promo,target_inp):
+#     #check the lasat season of the data_promo and if the last 3 values of that season are same 
+#     # then put next season
+#     last_sea = data_promo1[data_promo1[hier]==spc_hier].tail(1)[date_promo].values[0]
+#     #val= data_promo1[data_promo1[hier]==spc_hier][last_sea].tail(3).sum().astype('int') #CHANGE THE TAIL TO 3 FOR 4 SEASONS YW 
+#     sea = re.findall('\d',last_sea[0]) #VALUE OF LAST SEASON ex. 0 or 1
+#     for i in range(2):
+#         target_inp[f'season_{i}']=0 #CHANGE ALL THE SEASONS TO 0 AT FIRST THEN MAKE THE NEXT SEASON 1
+#         
+#     new_cson = (int(sea[0])+1)%2 #TO GET NEXT SEASON 
+#     target_inp[f'season_{new_cson}']=1
+#     
+#     # IF WE HAVE MORE THAN 2 SEASONS USE THIS CODE FOR GETTING NEXT SEASON WITHOUT ANY HASSLE YW
+# # =============================================================================
+# #     for i in range(4): #CHANGE THE RANGE TO 4 FOR 4S 
+# #         target_inp[f'season_{i}']=0
+# #     if val.values[0]==3: 
+# #         new_cson = (int(sea[0])+1)%4 #TO GET NEXT SEASON 
+# #         target_inp[f'season_{new_cson}']=1
+# #     else : 
+# #         target_inp[last_sea[0]]=1
+# # =============================================================================
+#     return target_inp
 # =============================================================================
-    return target_inp
 
-def user_input_part2(data_promo1,hier,spc_hier,added_col1,added_col2,channel_list,chann_list,driver1_sea,driver1,mdf1_sea,lr,decay,config_All_india_promo,data_json,mod):
+def user_input_part2(data_promo1,hier,spc_hier,added_col1,added_col2,channel_list,chann_list,driver1,mdf1,lr,decay,config_All_india_promo,data_json,mod):
     
     date_promo=[] 
     for i in range(int(config_All_india_promo[config_All_india_promo['derived_dimension']=='date_var']['num_rav_var'].values[0])):
@@ -188,7 +202,7 @@ def user_input_part2(data_promo1,hier,spc_hier,added_col1,added_col2,channel_lis
     
     last=data_promo1[data_promo1[hier]==spc_hier].tail(1)
     last =user_cor_adj(last,added_col1,added_col2)
-    rem_col=list(set(list(last.columns))-set([hier]+date_promo +['Sales', 'PCV', 'Price']+chann_list+ [str('season_')+str(i) for i in range(2)])) #CHANGE THE VALUE OF 2 TO 4 IN CASE OF 4 SEASONS
+    rem_col=list(set(list(last.columns))-set([hier]+date_promo +['Sales', 'PCV', 'Price']+chann_list))#+ [str('season_')+str(i) for i in range(2)])) #CHANGE THE VALUE OF 2 TO 4 IN CASE OF 4 SEASONS
     
     last_val=last.drop(columns=rem_col)
     last_val_dict= last_val.reindex().to_dict('records')
@@ -199,13 +213,13 @@ def user_input_part2(data_promo1,hier,spc_hier,added_col1,added_col2,channel_lis
     for i in range(len(channel_list)):
         user_inp[channel_list[i]]=float(data_json[channel_list[i]])
     #keeping specified cols 
-    create_cson(data_promo1,hier,spc_hier,date_promo,user_inp)
+    #create_cson(data_promo1,hier,spc_hier,date_promo,user_inp)
     
     user_inp=user_cor_adj(user_inp, added_col1,added_col2)
     #user_inp_copy= user_inp.copy() 
     
-    test=user_inp_2_test(user_inp,last_val,chann_list,lr,decay,driver1_sea) 
-    coeff_1=coeff123(data_promo1,hier,spc_hier,mdf1_sea)
+    test=user_inp_2_test(user_inp,last_val,chann_list,lr,decay,driver1) 
+    coeff_1=coeff123(data_promo1,hier,spc_hier,mdf1)
     coeff1=coeff_1.copy() 
     coeff1.drop(columns=[hier],inplace=True)
     coeff1.reset_index(inplace=True,drop=True)
@@ -223,7 +237,7 @@ def user_input_part2(data_promo1,hier,spc_hier,added_col1,added_col2,channel_lis
     #creating a dict for best possible value 
     
     #this dict contains all the imoprtant variables like channel_list and PCV and Price with their corresponding names of variables like ad_stock and log values
-    one_one_dict={}
+    one_one_dict={} 
     for i in range(len(chann_list)):
         one_one_dict[chann_list[i]]=coeff_1.columns[i]
         one_one_dict['Price']='Price'
@@ -252,7 +266,8 @@ def user_input_part2(data_promo1,hier,spc_hier,added_col1,added_col2,channel_lis
     #THIS CHANGES IT TO ADSTOCK AND LOG TRANSFORMATION 
     test1=user_inp_2_test(best_values,last_val,chann_list,lr,decay,driver1)
 
-    create_cson(data_promo1,hier,spc_hier,date_promo,test1)
+    #Create New season for the user based on the last few seasons
+    #create_cson(data_promo1,hier,spc_hier,date_promo,test1)
 
     test1['Intercept']=1 
     #test=test.append([test]*(len(data_promo1[hier].unique())-1),ignore_index=True)
@@ -262,23 +277,28 @@ def user_input_part2(data_promo1,hier,spc_hier,added_col1,added_col2,channel_lis
     result1=dict(zip((coeff_1[hier]),(coeff1*test1).sum(axis=1)))
     #p_sales_recom=p_chg_sales_recom(result1.get(spc_hier),last['Sales'+str('_log')].sum())
     p_sales_recom=p_chg_sales_recom(result1.get(spc_hier),last_val['Sales'].sum())
-    budget = float(data_json['Budget'])
-    budget_params = pred_bugdet(budget,best_values.copy()) 
+    #budget = float(data_json['Budget'])
+    #budget_params = pred_bugdet(budget,best_values.copy()) 
     rounding_off(p_sales) 
     rounding_off(best_values)
     rounding_off(p_sales_recom)
     print(rounding_off(best_values))
     
     #LAST VALUE WITH ADSTOCK AND SALES VAR
-    last_val_roi = data_promo1[[f'ad_stock_nad_{channel}' for channel in chann_list]+['Sales','PCV','Price']+[hier]+[f'season_{i}' for i in range(2)]] #CHANGE THE VALUE OF 2 to 4 IN CASE OF 4 SEASONS 
+    last_val_roi = data_promo1[[f'ad_stock_nad_{channel}' for channel in chann_list]+['Sales','PCV','Price']+[hier]]#+[f'season_{i}' for i in range(2)]] #CHANGE THE VALUE OF 2 to 4 IN CASE OF 4 SEASONS 
     last_val_roi = last_val_roi[last_val_roi[hier]==spc_hier].tail(1)
-    
+    vol_local= vol_combo(added_col1,added_col2,chann_list)
     #function for roi values with for loop in new channel_list 
-    roi_dict={}
+    roi_dict_2={}
     for channel in chann_list: 
-        roi_dict[channel] = roi_var(last_val_roi.copy(),test,coeff_1,hier,spc_hier,f'ad_stock_nad_{channel}') 
-        
-    output2={'per_of_sales':rounding_off(p_sales),"recommendation":rounding_off(best_values),"Recommendation_on_budget": rounding_off(budget_params),"recommended_sales":rounding_off(p_sales_recom), "ROI":rounding_off(roi_dict)}
+        roi_dict_2[channel] = roi_var_type(last_val_roi.copy(),test,user_input.vol_dist_sam,hier,spc_hier,channel) 
+    for i in chann_list:
+        if (vol_local):
+            roi_dict_2[vol_local[i]]=roi_dict_2.pop(i)
+    for i in chann_list:
+        if (vol_local):
+            best_values[vol_local[i]]=best_values.pop(i)
+    output2={'PERCENTAGE CHANGES IN SALES':rounding_off(p_sales),"RECOMMENDATIONS":rounding_off(best_values),"RECOMMENDED SALES AND PERCENTAGE CHANGES":rounding_off(p_sales_recom), "ROI OF SPENDS":rounding_off(roi_dict_2)}
     return output2 
     
     
